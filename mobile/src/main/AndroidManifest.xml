@@ -20,7 +20,16 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <service android:name=".services.ListenWearableDataService" />
+        <!--<service android:name=".services.ListenWearableDataService" />-->
+
+        <service android:name=".services.ListenWearableDataService">
+            <intent-filter>
+                <!--<action android:name="com.google.android.gms.wearable.DATA_CHANGED" />-->
+                <!--<action android:name="com.google.android.gms.wearable.MESSAGE_RECEIVED" />-->
+                <!--<data android:scheme="wear" android:host="*" android:pathPrefix="/FirstExample" />-->
+                <action android:name="com.google.android.gms.wearable.BIND_LISTENER" />
+            </intent-filter>
+        </service>
     </application>
 
 </manifest>

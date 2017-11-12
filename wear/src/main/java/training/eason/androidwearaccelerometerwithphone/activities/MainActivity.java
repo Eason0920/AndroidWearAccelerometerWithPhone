@@ -134,12 +134,15 @@ public class MainActivity extends WearableActivity implements GoogleApiClient.Co
 
     @Override
     public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
-
+        Log.e(TAG,
+                String.format("GoogleClientApi connect failure: %s",
+                        connectionResult.getErrorMessage()));
     }
 
     @OnClick(R.id.accEventButton)
     protected void onAccEventButtonClick(View view) {
-        if (mNode != null && mGoogleApiClient != null && mGoogleApiClient.isConnecting()) {
+        final boolean connecting = mGoogleApiClient.isConnecting();
+        if (mNode != null && mGoogleApiClient != null) {
             Wearable.MessageApi.sendMessage(mGoogleApiClient, mNode.getId(), CALLER_EVENT, null)
                     .setResultCallback(new ResultCallback<MessageApi.SendMessageResult>() {
 
@@ -193,6 +196,9 @@ public class MainActivity extends WearableActivity implements GoogleApiClient.Co
 //        }
     }
 
+    /**
+     * 取得與配對的行動裝置連線用的節點
+     */
     private void resolveNode() {
         Wearable.NodeApi.getConnectedNodes(mGoogleApiClient)
                 .setResultCallback(new ResultCallback<NodeApi.GetConnectedNodesResult>() {
