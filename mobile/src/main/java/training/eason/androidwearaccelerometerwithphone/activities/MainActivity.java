@@ -1,7 +1,7 @@
 package training.eason.androidwearaccelerometerwithphone.activities;
 
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 
 import training.eason.androidwearaccelerometerwithphone.R;
 
