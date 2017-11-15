@@ -40,14 +40,6 @@ public class MainActivity extends WearableActivity implements GoogleApiClient.Co
 
     @BindView(R.id.accDelayChoiceRadioGroup)
     RadioGroup mAccDelayChoiceRadioGroup;
-    //    @BindView(R.id.accDelayChoiceFastestRadioButton)
-//    RadioButton mAccDelayChoiceFastestRadioButton;
-//    @BindView(R.id.accDelayChoiceNormalRadioButton)
-//    RadioButton mAccDelayChoiceNormalRadioButton;
-//    @BindView(R.id.accDelayChoiceGameRadioButton)
-//    RadioButton mAccDelayChoiceGameRadioButton;
-//    @BindView(R.id.accDelayChoiceUiRadioButton)
-//    RadioButton mAccDelayChoiceUiRadioButton;
     @BindView(R.id.accEventButton)
     Button mAccEventButton;
     @BindView(R.id.accSamplingRateTextView)
@@ -158,18 +150,23 @@ public class MainActivity extends WearableActivity implements GoogleApiClient.Co
                         final long nowMillis = TimeUnit.MILLISECONDS.convert(sensorEvent.timestamp, TimeUnit.NANOSECONDS);
                         final long diffMillis = (nowMillis - mPrevMillis);
                         mPrevMillis = nowMillis;
+                        final String accX = String.valueOf(sensorEvent.values[0]);
+                        final String accY = String.valueOf(sensorEvent.values[1]);
+                        final String accZ = String.valueOf(sensorEvent.values[2]);
 
                         mAccSamplingRate.setText(String.format("Sampling rate per second: %s", (1000 / diffMillis)));
-                        mAccXTextView.setText(String.format(Locale.getDefault(), "X: %s", sensorEvent.values[0]));
-                        mAccYTextView.setText(String.format(Locale.getDefault(), "Y: %s", sensorEvent.values[1]));
-                        mAccZTextView.setText(String.format(Locale.getDefault(), "Z: %s", sensorEvent.values[2]));
+                        mAccXTextView.setText(String.format(Locale.getDefault(), "X: %s", accX));
+                        mAccYTextView.setText(String.format(Locale.getDefault(), "Y: %s", accY));
+                        mAccZTextView.setText(String.format(Locale.getDefault(), "Z: %s", accZ));
 
                         if (mNode != null && mGoogleApiClient != null) {
+                            String message = String.format("%s,%s,%s", accX, accY, accZ);
+
                             Wearable.MessageApi.sendMessage(
                                     mGoogleApiClient,
                                     mNode.getId(),
                                     CALLER_EVENT,
-                                    String.valueOf(sensorEvent.values[0]).getBytes())
+                                    message.getBytes())
                                     .setResultCallback(new ResultCallback<MessageApi.SendMessageResult>() {
 
                                         @Override

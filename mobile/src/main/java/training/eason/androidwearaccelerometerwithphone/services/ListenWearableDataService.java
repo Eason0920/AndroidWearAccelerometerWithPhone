@@ -4,9 +4,10 @@ import android.annotation.SuppressLint;
 
 import com.google.android.gms.wearable.MessageEvent;
 import com.google.android.gms.wearable.WearableListenerService;
+import com.opencsv.CSVWriter;
 
 import java.io.File;
-import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 
 public class ListenWearableDataService extends WearableListenerService {
@@ -17,25 +18,34 @@ public class ListenWearableDataService extends WearableListenerService {
     @Override
     public void onMessageReceived(MessageEvent messageEvent) {
         super.onMessageReceived(messageEvent);
-
-//        String path = messageEvent.getPath();
         final byte[] data = messageEvent.getData();
-//        Toast.makeText(this, path, Toast.LENGTH_SHORT).show();
-//        Log.e(TAG, path);
 
         File fileDir = getApplicationContext().getExternalFilesDir("accelerometer");
         if (fileDir != null && !fileDir.exists()) {
             fileDir.mkdir();
         }
 
-        String fileFullName = String.format("%s/%s", fileDir, "myfile.txt");
-        String string = "test";
-        FileOutputStream outputStream;
+        String fileFullPath = String.format("%s/%s", fileDir, "accelerometer.txt");
+        File f = new File(fileFullPath);
+        CSVWriter writer;
+        String[] contents;
+
         try {
-            outputStream = new FileOutputStream(fileFullName, true);
-            outputStream.write(data);
-            outputStream.flush();
-            outputStream.close();
+
+            // File exist
+            if (f.exists() && !f.isDirectory()) {
+                writer = new CSVWriter(new FileWriter(fileFullPath, true));
+            } else {    // File not exist
+                writer = new CSVWriter(new FileWriter(fileFullPath));
+                contents = new String[]{"acc_x", "acc_y", "acc_z"};
+                writer.writeNext(contents);
+            }
+
+            contents = new String(data).split(",");
+
+            writer.writeNext(contents);
+            writer.close();
+
         } catch (IOException e) {
             e.printStackTrace();
         }

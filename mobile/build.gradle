@@ -29,5 +29,6 @@ dependencies {
     wearApp project(':wear')
     implementation 'com.google.android.gms:play-services-wearable:11.4.2'
     implementation 'com.jakewharton:butterknife:8.8.1'
+    implementation 'com.opencsv:opencsv:4.1'
     annotationProcessor 'com.jakewharton:butterknife-compiler:8.8.1'
 }
