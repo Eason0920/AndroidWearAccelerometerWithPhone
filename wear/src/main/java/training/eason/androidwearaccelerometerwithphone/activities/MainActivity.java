@@ -6,24 +6,21 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.support.wearable.activity.WearableActivity;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.TextView;
 
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.common.api.ResultCallback;
-import com.google.android.gms.wearable.MessageApi;
 import com.google.android.gms.wearable.Node;
-import com.google.android.gms.wearable.NodeApi;
-import com.google.android.gms.wearable.Wearable;
+import com.opencsv.CSVWriter;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
@@ -33,10 +30,12 @@ import butterknife.OnClick;
 import butterknife.Unbinder;
 import training.eason.androidwearaccelerometerwithphone.R;
 
-public class MainActivity extends WearableActivity implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
+public class MainActivity extends WearableActivity {
 
-    public static final String CALLER_EVENT = "/sendAccelerometer";
-    public static final String TAG = "MainActivity";
+    private static final String CALLER_EVENT = "/sendAccelerometer";
+    private static final String TAG = "MainActivity";
+    private static final String SIMPLE_DATE_FORMAT = "(yyyyMMdd_HHmmss)";
+    private static final String ACCELEROMETER_FLODER_NAME = "accelerometer";
 
     @BindView(R.id.accDelayChoiceRadioGroup)
     RadioGroup mAccDelayChoiceRadioGroup;
@@ -57,10 +56,13 @@ public class MainActivity extends WearableActivity implements GoogleApiClient.Co
     private Unbinder mUnbinder;
     private int mCurrentStatus = 0;
     private long mPrevMillis = 0;
-    private Integer mCurrentDelayMode;
-    private GoogleApiClient mGoogleApiClient;
+    private Integer mCurrentSwimmingMode;
     private Node mNode;
+    private String mAccelerometerFileName;
+    private String mAccelerometerFileDateToken;
+    private File mFileDir;
 
+    @SuppressWarnings("ResultOfMethodCallIgnored")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -71,21 +73,21 @@ public class MainActivity extends WearableActivity implements GoogleApiClient.Co
         assert mSensorManager != null;
         mSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
 
-        mAccDelayChoiceRadioGroup.check(R.id.accDelayChoiceFastestRadioButton);
+        mAccDelayChoiceRadioGroup.check(R.id.accDelayChoiceFreeStyleRadioButton);
         mAccDelayChoiceRadioGroup.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
 
             @Override
             public void onCheckedChanged(RadioGroup radioGroup, int id) {
                 final RadioButton checkRadioButton = findViewById(id);
-                mCurrentDelayMode = Integer.valueOf(checkRadioButton.getTag().toString());
+                mCurrentSwimmingMode = Integer.valueOf(checkRadioButton.getTag().toString());
             }
         });
 
-        mGoogleApiClient = new GoogleApiClient.Builder(this)
-                .addApi(Wearable.API)
-                .addConnectionCallbacks(this)
-                .addOnConnectionFailedListener(this)
-                .build();
+        //create save accelerometer data folder
+        mFileDir = getApplicationContext().getExternalFilesDir(ACCELEROMETER_FLODER_NAME);
+        if (mFileDir != null && !mFileDir.exists()) {
+            mFileDir.mkdir();
+        }
 
         // Enables Always-on
         setAmbientEnabled();
@@ -94,14 +96,13 @@ public class MainActivity extends WearableActivity implements GoogleApiClient.Co
     @Override
     protected void onStart() {
         super.onStart();
-        mGoogleApiClient.connect();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
         final RadioButton checkRadioButton = findViewById(mAccDelayChoiceRadioGroup.getCheckedRadioButtonId());
-        mCurrentDelayMode = Integer.valueOf(checkRadioButton.getTag().toString());
+        mCurrentSwimmingMode = Integer.valueOf(checkRadioButton.getTag().toString());
     }
 
     @Override
@@ -115,25 +116,7 @@ public class MainActivity extends WearableActivity implements GoogleApiClient.Co
     @Override
     protected void onDestroy() {
         mUnbinder.unbind();
-        mGoogleApiClient.disconnect();
         super.onDestroy();
-    }
-
-    @Override
-    public void onConnected(@Nullable Bundle bundle) {
-        resolveNode();
-    }
-
-    @Override
-    public void onConnectionSuspended(int i) {
-
-    }
-
-    @Override
-    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
-        Log.e(TAG,
-                String.format("GoogleClientApi connect failure: %s",
-                        connectionResult.getErrorMessage()));
     }
 
     @OnClick(R.id.accEventButton)
@@ -142,6 +125,24 @@ public class MainActivity extends WearableActivity implements GoogleApiClient.Co
             mAccEventButton.setText("停止");
             mCurrentStatus = 1;
             mAccDelayChoiceRadioGroup.setVisibility(View.GONE);
+
+            //set fileName by radio button choice tag
+            switch (mCurrentSwimmingMode) {
+                case 0:
+                    mAccelerometerFileName = "freeStyle";
+                    break;
+                case 1:
+                    mAccelerometerFileName = "breaststroke";
+                    break;
+                case 2:
+                    mAccelerometerFileName = "drowning";
+                    break;
+            }
+
+            //set file date token date format
+            mAccelerometerFileDateToken =
+                    new SimpleDateFormat(SIMPLE_DATE_FORMAT, Locale.getDefault()).format(new Date());
+
             mSensorEventListener = new SensorEventListener() {
 
                 @Override
@@ -154,32 +155,14 @@ public class MainActivity extends WearableActivity implements GoogleApiClient.Co
                         final String accY = String.valueOf(sensorEvent.values[1]);
                         final String accZ = String.valueOf(sensorEvent.values[2]);
 
+                        //show data on ui
                         mAccSamplingRate.setText(String.format("Sampling rate per second: %s", (1000 / diffMillis)));
                         mAccXTextView.setText(String.format(Locale.getDefault(), "X: %s", accX));
                         mAccYTextView.setText(String.format(Locale.getDefault(), "Y: %s", accY));
                         mAccZTextView.setText(String.format(Locale.getDefault(), "Z: %s", accZ));
 
-                        if (mNode != null && mGoogleApiClient != null) {
-                            String message = String.format("%s,%s,%s", accX, accY, accZ);
-
-                            Wearable.MessageApi.sendMessage(
-                                    mGoogleApiClient,
-                                    mNode.getId(),
-                                    CALLER_EVENT,
-                                    message.getBytes())
-                                    .setResultCallback(new ResultCallback<MessageApi.SendMessageResult>() {
-
-                                        @Override
-                                        public void onResult(@NonNull MessageApi.SendMessageResult sendMessageResult) {
-                                            if (!sendMessageResult.getStatus().isSuccess()) {
-                                                Log.e(TAG,
-                                                        String.format("sendMessage failure statusCode: %s",
-                                                                sendMessageResult.getStatus().getStatusCode()));
-                                            }
-                                        }
-                                    });
-
-                        }
+                        //write sensor data to file
+                        writeFileOnWearableSync(new String[]{accX, accY, accZ});
                     }
                 }
 
@@ -190,64 +173,57 @@ public class MainActivity extends WearableActivity implements GoogleApiClient.Co
 
             };
 
-            mSensorManager.registerListener(mSensorEventListener, mSensor, mCurrentDelayMode);
+            //start sensor listener
+            mSensorManager.registerListener(mSensorEventListener,
+                    mSensor,
+                    SensorManager.SENSOR_DELAY_FASTEST);
         } else {
             mSensorManager.unregisterListener(mSensorEventListener);
             mAccEventButton.setText("開始");
             mCurrentStatus = 0;
             mAccDelayChoiceRadioGroup.setVisibility(View.VISIBLE);
         }
-
-///////////////////////////////////////////////////////
-//        if (mCurrentStatus == 0) {
-//            mAccEventButton.setText("停止");
-//            mCurrentStatus = 1;
-//            mAccDelayChoiceRadioGroup.setVisibility(View.GONE);
-//            mSensorEventListener = new SensorEventListener() {
-//
-//                @Override
-//                public void onSensorChanged(final SensorEvent sensorEvent) {
-//                    if (sensorEvent.accuracy != SensorManager.SENSOR_STATUS_UNRELIABLE) {
-//                        final long nowMillis = TimeUnit.MILLISECONDS.convert(sensorEvent.timestamp, TimeUnit.NANOSECONDS);
-//                        final long diffMillis = (nowMillis - mPrevMillis);
-//                        mPrevMillis = nowMillis;
-//
-//                        mAccSamplingRate.setText(String.format("Sampling rate per second: %s", (1000 / diffMillis)));
-//                        mAccXTextView.setText(String.format(Locale.getDefault(), "X: %s", sensorEvent.values[0]));
-//                        mAccYTextView.setText(String.format(Locale.getDefault(), "Y: %s", sensorEvent.values[1]));
-//                        mAccZTextView.setText(String.format(Locale.getDefault(), "Z: %s", sensorEvent.values[2]));
-//                    }
-//                }
-//
-//                @Override
-//                public void onAccuracyChanged(Sensor sensor, int i) {
-//
-//                }
-//
-//            };
-//
-//            mSensorManager.registerListener(mSensorEventListener, mSensor, mCurrentDelayMode);
-//        } else {
-//            mSensorManager.unregisterListener(mSensorEventListener);
-//            mAccEventButton.setText("開始");
-//            mCurrentStatus = 0;
-//            mAccDelayChoiceRadioGroup.setVisibility(View.VISIBLE);
-//        }
     }
 
     /**
-     * 取得與配對的行動裝置連線用的節點
+     * write accelerometer data file on wearable storage
+     *
+     * @param data accelerometer x, y, z
      */
-    private void resolveNode() {
-        Wearable.NodeApi.getConnectedNodes(mGoogleApiClient)
-                .setResultCallback(new ResultCallback<NodeApi.GetConnectedNodesResult>() {
+    private synchronized void writeFileOnWearableSync(String[] data) {
+        String fileFullPath = String.format("%s/%s_%s.csv",
+                mFileDir,
+                mAccelerometerFileName,
+                mAccelerometerFileDateToken
+        );
 
-                    @Override
-                    public void onResult(@NonNull NodeApi.GetConnectedNodesResult nodesResult) {
-                        for (Node node : nodesResult.getNodes()) {
-                            mNode = node;
-                        }
-                    }
-                });
+        File file = new File(fileFullPath);
+        CSVWriter csvWriter = null;
+        String[] contents;
+
+        try {
+
+            //File exist
+            if (file.exists() && !file.isDirectory()) {
+                csvWriter = new CSVWriter(new FileWriter(fileFullPath, true));
+            } else {    //File not exist
+                csvWriter = new CSVWriter(new FileWriter(fileFullPath));
+                contents = new String[]{"acc_x", "acc_y", "acc_z"};
+                csvWriter.writeNext(contents);
+            }
+
+            contents = data;
+            csvWriter.writeNext(contents);
+            csvWriter.flush();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }finally {
+            try {
+                assert csvWriter != null;
+                csvWriter.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 }

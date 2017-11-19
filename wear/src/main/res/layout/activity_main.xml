@@ -28,32 +28,25 @@
                 android:orientation="vertical">
 
                 <RadioButton
-                    android:id="@+id/accDelayChoiceFastestRadioButton"
+                    android:id="@+id/accDelayChoiceFreeStyleRadioButton"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:tag="0"
-                    android:text="FASTEST" />
+                    android:text="自由式" />
 
                 <RadioButton
-                    android:id="@+id/accDelayChoiceGameRadioButton"
+                    android:id="@+id/accDelayChoiceBreaststrokeRadioButton"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:tag="1"
-                    android:text="GAME" />
+                    android:text="蛙式" />
 
                 <RadioButton
-                    android:id="@+id/accDelayChoiceUiRadioButton"
+                    android:id="@+id/accDelayChoiceDrowningRadioButton"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:tag="2"
-                    android:text="UI" />
-
-                <RadioButton
-                    android:id="@+id/accDelayChoiceNormalRadioButton"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:tag="3"
-                    android:text="NORMAL" />
+                    android:text="溺水" />
 
             </RadioGroup>
 
