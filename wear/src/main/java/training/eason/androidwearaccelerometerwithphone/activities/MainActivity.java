@@ -147,8 +147,7 @@ public class MainActivity extends WearableActivity {
 
                 @Override
                 public void onSensorChanged(final SensorEvent sensorEvent) {
-                    //cancel sensor unreliable check for asus zenwatch 2
-//                    if (sensorEvent.accuracy != SensorManager.SENSOR_STATUS_UNRELIABLE) {
+                    if (sensorEvent.accuracy != SensorManager.SENSOR_STATUS_UNRELIABLE) {
                     final long nowMillis = TimeUnit.MILLISECONDS.convert(sensorEvent.timestamp, TimeUnit.NANOSECONDS);
                     final long diffMillis = (nowMillis - mPrevMillis);
                     mPrevMillis = nowMillis;
@@ -156,15 +155,15 @@ public class MainActivity extends WearableActivity {
                     final String accY = String.valueOf(sensorEvent.values[1]);
                     final String accZ = String.valueOf(sensorEvent.values[2]);
 
-                    //show data on ui
-                    mAccSamplingRate.setText(String.format("Sampling rate per second: %s", (1000 / diffMillis)));
-                    mAccXTextView.setText(String.format(Locale.getDefault(), "X: %s", accX));
-                    mAccYTextView.setText(String.format(Locale.getDefault(), "Y: %s", accY));
-                    mAccZTextView.setText(String.format(Locale.getDefault(), "Z: %s", accZ));
+                    //cancel show data on ui
+//                    mAccSamplingRate.setText(String.format("Sampling rate per second: %s", (1000 / diffMillis)));
+//                    mAccXTextView.setText(String.format(Locale.getDefault(), "X: %s", accX));
+//                    mAccYTextView.setText(String.format(Locale.getDefault(), "Y: %s", accY));
+//                    mAccZTextView.setText(String.format(Locale.getDefault(), "Z: %s", accZ));
 
                     //write sensor data to file
                     writeFileOnWearableSync(new String[]{accX, accY, accZ});
-//                    }
+                    }
                 }
 
                 @Override
