@@ -21,42 +21,6 @@
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
-            <RadioGroup
-                android:id="@+id/accDelayChoiceRadioGroup"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:orientation="vertical">
-
-                <RadioButton
-                    android:id="@+id/accDelayChoiceFastestRadioButton"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:tag="0"
-                    android:text="FASTEST" />
-
-                <RadioButton
-                    android:id="@+id/accDelayChoiceGameRadioButton"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:tag="1"
-                    android:text="GAME" />
-
-                <RadioButton
-                    android:id="@+id/accDelayChoiceUiRadioButton"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:tag="2"
-                    android:text="UI" />
-
-                <RadioButton
-                    android:id="@+id/accDelayChoiceNormalRadioButton"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:tag="3"
-                    android:text="NORMAL" />
-
-            </RadioGroup>
-
             <Button
                 android:id="@+id/accEventButton"
                 android:layout_width="wrap_content"

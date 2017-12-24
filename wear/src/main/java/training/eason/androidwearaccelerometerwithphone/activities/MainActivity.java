@@ -12,8 +12,6 @@ import android.support.wearable.activity.WearableActivity;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
-import android.widget.RadioButton;
-import android.widget.RadioGroup;
 import android.widget.TextView;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -24,6 +22,11 @@ import com.google.android.gms.wearable.Node;
 import com.google.android.gms.wearable.NodeApi;
 import com.google.android.gms.wearable.Wearable;
 
+import org.jtransforms.fft.DoubleFFT_1D;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
@@ -37,9 +40,8 @@ public class MainActivity extends WearableActivity implements GoogleApiClient.Co
 
     public static final String CALLER_EVENT = "/sendAccelerometer";
     public static final String TAG = "MainActivity";
+    public static final int INTERVAL = 256;
 
-    @BindView(R.id.accDelayChoiceRadioGroup)
-    RadioGroup mAccDelayChoiceRadioGroup;
     @BindView(R.id.accEventButton)
     Button mAccEventButton;
     @BindView(R.id.accSamplingRateTextView)
@@ -57,9 +59,23 @@ public class MainActivity extends WearableActivity implements GoogleApiClient.Co
     private Unbinder mUnbinder;
     private int mCurrentStatus = 0;
     private long mPrevMillis = 0;
-    private Integer mCurrentDelayMode;
     private GoogleApiClient mGoogleApiClient;
     private Node mNode;
+    private boolean mIsConvertion = false;
+    private List<AccDataAccess> mAccDataAccessList = new ArrayList<>();
+
+    class AccDataAccess {
+        float mAccX;
+        float mAccY;
+        float mAccZ;
+        double mPower;
+
+//        public AccDataAccess(float accX, float accY, float accZ){
+//            mAccX = accX;
+//            mAccY = accY;
+//            mAccZ = accZ;
+//        }
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -70,16 +86,6 @@ public class MainActivity extends WearableActivity implements GoogleApiClient.Co
         mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
         assert mSensorManager != null;
         mSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
-
-        mAccDelayChoiceRadioGroup.check(R.id.accDelayChoiceFastestRadioButton);
-        mAccDelayChoiceRadioGroup.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener() {
-
-            @Override
-            public void onCheckedChanged(RadioGroup radioGroup, int id) {
-                final RadioButton checkRadioButton = findViewById(id);
-                mCurrentDelayMode = Integer.valueOf(checkRadioButton.getTag().toString());
-            }
-        });
 
         mGoogleApiClient = new GoogleApiClient.Builder(this)
                 .addApi(Wearable.API)
@@ -100,15 +106,12 @@ public class MainActivity extends WearableActivity implements GoogleApiClient.Co
     @Override
     protected void onResume() {
         super.onResume();
-        final RadioButton checkRadioButton = findViewById(mAccDelayChoiceRadioGroup.getCheckedRadioButtonId());
-        mCurrentDelayMode = Integer.valueOf(checkRadioButton.getTag().toString());
     }
 
     @Override
     protected void onPause() {
         mAccEventButton.setText("開始");
         mSensorManager.unregisterListener(mSensorEventListener);
-        mAccDelayChoiceRadioGroup.setVisibility(View.VISIBLE);
         super.onPause();
     }
 
@@ -141,7 +144,6 @@ public class MainActivity extends WearableActivity implements GoogleApiClient.Co
         if (mCurrentStatus == 0) {
             mAccEventButton.setText("停止");
             mCurrentStatus = 1;
-            mAccDelayChoiceRadioGroup.setVisibility(View.GONE);
             mSensorEventListener = new SensorEventListener() {
 
                 @Override
@@ -150,9 +152,27 @@ public class MainActivity extends WearableActivity implements GoogleApiClient.Co
                         final long nowMillis = TimeUnit.MILLISECONDS.convert(sensorEvent.timestamp, TimeUnit.NANOSECONDS);
                         final long diffMillis = (nowMillis - mPrevMillis);
                         mPrevMillis = nowMillis;
-                        final String accX = String.valueOf(sensorEvent.values[0]);
-                        final String accY = String.valueOf(sensorEvent.values[1]);
-                        final String accZ = String.valueOf(sensorEvent.values[2]);
+
+                        final float accX = sensorEvent.values[0];
+                        final float accY = sensorEvent.values[1];
+                        final float accZ = sensorEvent.values[2];
+
+                        if (!mIsConvertion) {
+                            if (mAccDataAccessList.size() < INTERVAL) {
+                                mAccDataAccessList.add(new AccDataAccess() {{
+                                    mAccX = accX;
+                                    mAccY = accY;
+                                    mAccZ = accZ;
+
+                                    //計算能量
+                                    mPower = Math.sqrt(Math.pow(accX, 2) + Math.pow(accY, 2) + Math.pow(accZ, 2));
+                                }});
+
+                                if (mAccDataAccessList.size() == INTERVAL) {
+                                    convertFrequencyByFFT();
+                                }
+                            }
+                        }
 
                         mAccSamplingRate.setText(String.format("Sampling rate per second: %s", (1000 / diffMillis)));
                         mAccXTextView.setText(String.format(Locale.getDefault(), "X: %s", accX));
@@ -190,49 +210,13 @@ public class MainActivity extends WearableActivity implements GoogleApiClient.Co
 
             };
 
-            mSensorManager.registerListener(mSensorEventListener, mSensor, mCurrentDelayMode);
+            //per second 100 Hz
+            mSensorManager.registerListener(mSensorEventListener, mSensor, SensorManager.SENSOR_DELAY_FASTEST);
         } else {
             mSensorManager.unregisterListener(mSensorEventListener);
             mAccEventButton.setText("開始");
             mCurrentStatus = 0;
-            mAccDelayChoiceRadioGroup.setVisibility(View.VISIBLE);
         }
-
-///////////////////////////////////////////////////////
-//        if (mCurrentStatus == 0) {
-//            mAccEventButton.setText("停止");
-//            mCurrentStatus = 1;
-//            mAccDelayChoiceRadioGroup.setVisibility(View.GONE);
-//            mSensorEventListener = new SensorEventListener() {
-//
-//                @Override
-//                public void onSensorChanged(final SensorEvent sensorEvent) {
-//                    if (sensorEvent.accuracy != SensorManager.SENSOR_STATUS_UNRELIABLE) {
-//                        final long nowMillis = TimeUnit.MILLISECONDS.convert(sensorEvent.timestamp, TimeUnit.NANOSECONDS);
-//                        final long diffMillis = (nowMillis - mPrevMillis);
-//                        mPrevMillis = nowMillis;
-//
-//                        mAccSamplingRate.setText(String.format("Sampling rate per second: %s", (1000 / diffMillis)));
-//                        mAccXTextView.setText(String.format(Locale.getDefault(), "X: %s", sensorEvent.values[0]));
-//                        mAccYTextView.setText(String.format(Locale.getDefault(), "Y: %s", sensorEvent.values[1]));
-//                        mAccZTextView.setText(String.format(Locale.getDefault(), "Z: %s", sensorEvent.values[2]));
-//                    }
-//                }
-//
-//                @Override
-//                public void onAccuracyChanged(Sensor sensor, int i) {
-//
-//                }
-//
-//            };
-//
-//            mSensorManager.registerListener(mSensorEventListener, mSensor, mCurrentDelayMode);
-//        } else {
-//            mSensorManager.unregisterListener(mSensorEventListener);
-//            mAccEventButton.setText("開始");
-//            mCurrentStatus = 0;
-//            mAccDelayChoiceRadioGroup.setVisibility(View.VISIBLE);
-//        }
     }
 
     /**
@@ -249,5 +233,28 @@ public class MainActivity extends WearableActivity implements GoogleApiClient.Co
                         }
                     }
                 });
+    }
+
+    /**
+     * 將能量利用傅立葉轉換為頻率數據
+     */
+    private void convertFrequencyByFFT() {
+        mIsConvertion = true;
+
+        //取出能量數據
+        double[] inputAccDataPowers = new double[mAccDataAccessList.size()];
+        for (int i = 0; i < mAccDataAccessList.size(); i++) {
+            inputAccDataPowers[i] = mAccDataAccessList.get(i).mPower;
+            mAccDataAccessList.remove(i);
+        }
+
+        //利用 JTransforms FFT library 轉換為頻率數據
+        DoubleFFT_1D fftDo = new DoubleFFT_1D(inputAccDataPowers.length);
+        double[] fft = Arrays.copyOf(inputAccDataPowers, inputAccDataPowers.length * 2);
+        fftDo.realForwardFull(fft);
+
+//        for(double d: fft) {
+//            Log.e(TAG, "fft: " + d);
+//        }
     }
 }
