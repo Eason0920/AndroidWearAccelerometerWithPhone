@@ -50,6 +50,12 @@
 
             </RadioGroup>
 
+            <EditText
+                android:id="@+id/accFileNameEditText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="檔案名稱"/>
+
             <Button
                 android:id="@+id/accEventButton"
                 android:layout_width="wrap_content"

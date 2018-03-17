@@ -9,6 +9,7 @@ import android.os.Bundle;
 import android.support.wearable.activity.WearableActivity;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.TextView;
@@ -49,6 +50,8 @@ public class MainActivity extends WearableActivity {
     TextView mAccYTextView;
     @BindView(R.id.accZTextView)
     TextView mAccZTextView;
+    @BindView(R.id.accFileNameEditText)
+    EditText mAccFileNameEditText;
 
     private SensorManager mSensorManager;
     private SensorEventListener mSensorEventListener;
@@ -58,7 +61,8 @@ public class MainActivity extends WearableActivity {
     private long mPrevMillis = 0;
     private Integer mCurrentSwimmingMode;
     private Node mNode;
-    private String mAccelerometerFileName;
+    private String mAccelerometerCustomFileName;
+    private String mAccelerometerType;
     private String mAccelerometerFileDateToken;
     private File mFileDir;
 
@@ -125,17 +129,18 @@ public class MainActivity extends WearableActivity {
             mAccEventButton.setText("停止");
             mCurrentStatus = 1;
             mAccDelayChoiceRadioGroup.setVisibility(View.GONE);
+            mAccelerometerCustomFileName = mAccFileNameEditText.getText().toString();
 
             //set fileName by radio button choice tag
             switch (mCurrentSwimmingMode) {
                 case 0:
-                    mAccelerometerFileName = "freeStyle";
+                    mAccelerometerType = "freeStyle";
                     break;
                 case 1:
-                    mAccelerometerFileName = "breaststroke";
+                    mAccelerometerType = "breaststroke";
                     break;
                 case 2:
-                    mAccelerometerFileName = "drowning";
+                    mAccelerometerType = "drowning";
                     break;
             }
 
@@ -192,9 +197,10 @@ public class MainActivity extends WearableActivity {
      * @param data accelerometer x, y, z
      */
     private synchronized void writeFileOnWearableSync(String[] data) {
-        String fileFullPath = String.format("%s/%s_%s.csv",
+        String fileFullPath = String.format("%s/%s_%s_%s.csv",
                 mFileDir,
-                mAccelerometerFileName,
+                mAccelerometerCustomFileName,
+                mAccelerometerType,
                 mAccelerometerFileDateToken
         );
 
