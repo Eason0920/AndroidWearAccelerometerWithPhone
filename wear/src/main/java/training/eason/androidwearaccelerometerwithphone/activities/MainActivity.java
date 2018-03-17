@@ -35,12 +35,13 @@ import butterknife.ButterKnife;
 import butterknife.OnClick;
 import butterknife.Unbinder;
 import training.eason.androidwearaccelerometerwithphone.R;
+import training.eason.androidwearaccelerometerwithphone.libs.LimitQueue;
 
 public class MainActivity extends WearableActivity implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
 
-    public static final String CALLER_EVENT = "/sendAccelerometer";
+    public static final String CALLER_EVENT = "/drowningNotify";
     public static final String TAG = "MainActivity";
-    public static final int INTERVAL = 256;
+    public static final int ACC_DATA_INTERVAL = 256;
 
     @BindView(R.id.accEventButton)
     Button mAccEventButton;
@@ -61,20 +62,14 @@ public class MainActivity extends WearableActivity implements GoogleApiClient.Co
     private long mPrevMillis = 0;
     private GoogleApiClient mGoogleApiClient;
     private Node mNode;
-    private boolean mIsConvertion = false;
     private List<AccDataAccess> mAccDataAccessList = new ArrayList<>();
+    private LimitQueue<Boolean> mLimitQueue = new LimitQueue<>(5);
 
     class AccDataAccess {
         float mAccX;
         float mAccY;
         float mAccZ;
         double mPower;
-
-//        public AccDataAccess(float accX, float accY, float accZ){
-//            mAccX = accX;
-//            mAccY = accY;
-//            mAccZ = accZ;
-//        }
     }
 
     @Override
@@ -157,20 +152,18 @@ public class MainActivity extends WearableActivity implements GoogleApiClient.Co
                         final float accY = sensorEvent.values[1];
                         final float accZ = sensorEvent.values[2];
 
-                        if (!mIsConvertion) {
-                            if (mAccDataAccessList.size() < INTERVAL) {
-                                mAccDataAccessList.add(new AccDataAccess() {{
-                                    mAccX = accX;
-                                    mAccY = accY;
-                                    mAccZ = accZ;
+                        if (mAccDataAccessList.size() < ACC_DATA_INTERVAL) {
+                            mAccDataAccessList.add(new AccDataAccess() {{
+                                mAccX = accX;
+                                mAccY = accY;
+                                mAccZ = accZ;
 
-                                    //計算能量
-                                    mPower = Math.sqrt(Math.pow(accX, 2) + Math.pow(accY, 2) + Math.pow(accZ, 2));
-                                }});
+                                //計算能量
+                                mPower = Math.sqrt(Math.pow(accX, 2) + Math.pow(accY, 2) + Math.pow(accZ, 2));
+                            }});
 
-                                if (mAccDataAccessList.size() == INTERVAL) {
-                                    convertFrequencyByFFT();
-                                }
+                            if (mAccDataAccessList.size() == ACC_DATA_INTERVAL) {
+                                convertFrequencyByFFT();
                             }
                         }
 
@@ -178,28 +171,6 @@ public class MainActivity extends WearableActivity implements GoogleApiClient.Co
                         mAccXTextView.setText(String.format(Locale.getDefault(), "X: %s", accX));
                         mAccYTextView.setText(String.format(Locale.getDefault(), "Y: %s", accY));
                         mAccZTextView.setText(String.format(Locale.getDefault(), "Z: %s", accZ));
-
-                        if (mNode != null && mGoogleApiClient != null) {
-                            String message = String.format("%s,%s,%s", accX, accY, accZ);
-
-                            Wearable.MessageApi.sendMessage(
-                                    mGoogleApiClient,
-                                    mNode.getId(),
-                                    CALLER_EVENT,
-                                    message.getBytes())
-                                    .setResultCallback(new ResultCallback<MessageApi.SendMessageResult>() {
-
-                                        @Override
-                                        public void onResult(@NonNull MessageApi.SendMessageResult sendMessageResult) {
-                                            if (!sendMessageResult.getStatus().isSuccess()) {
-                                                Log.e(TAG,
-                                                        String.format("sendMessage failure statusCode: %s",
-                                                                sendMessageResult.getStatus().getStatusCode()));
-                                            }
-                                        }
-                                    });
-
-                        }
                     }
                 }
 
@@ -239,7 +210,6 @@ public class MainActivity extends WearableActivity implements GoogleApiClient.Co
      * 將能量利用傅立葉轉換為頻率數據
      */
     private void convertFrequencyByFFT() {
-        mIsConvertion = true;
 
         //取出能量數據
         double[] inputAccDataPowers = new double[mAccDataAccessList.size()];
@@ -256,5 +226,54 @@ public class MainActivity extends WearableActivity implements GoogleApiClient.Co
 //        for(double d: fft) {
 //            Log.e(TAG, "fft: " + d);
 //        }
+
+        //check
+        if (checkDrowning()) {
+            notifyMobile();
+        }
+    }
+
+    /**
+     * 檢查存放溺水狀態的集合是否有達到連續五次疑似溺水標準
+     *
+     * @return boolean
+     */
+    private boolean checkDrowning() {
+//        for (boolean state : mLimitQueue) {
+//            if (!state) {
+//                return false;
+//            }
+//        }
+
+        return true;
+    }
+
+    /**
+     * 發生溺水，通知手機
+     */
+    private void notifyMobile() {
+        if (mNode != null && mGoogleApiClient != null) {
+
+            String message = "drowning notify";
+
+            Wearable.MessageApi.sendMessage(
+                    mGoogleApiClient,
+                    mNode.getId(),
+                    CALLER_EVENT,
+                    message.getBytes())
+                    .setResultCallback(new ResultCallback<MessageApi.SendMessageResult>() {
+
+                        @Override
+                        public void onResult(@NonNull MessageApi.SendMessageResult sendMessageResult) {
+                            if (!sendMessageResult.getStatus().isSuccess()) {
+                                Log.e(TAG,
+                                        String.format("sendMessage failure statusCode: %s",
+                                                sendMessageResult.getStatus().getStatusCode()));
+                            }
+                        }
+                    });
+
+        }
+
     }
 }
