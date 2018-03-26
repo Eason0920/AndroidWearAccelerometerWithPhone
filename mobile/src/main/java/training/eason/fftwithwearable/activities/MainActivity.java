@@ -56,9 +56,7 @@ public class MainActivity extends AppCompatActivity implements
 
     @Override
     public void onConnected(@Nullable Bundle bundle) {
-        if (Log.isLoggable(TAG, Log.DEBUG)) {
-            Log.d(TAG, "Connected to Google Api Service");
-        }
+        Log.i(TAG, "Connected to Google Api Service");
         Wearable.DataApi.addListener(mGoogleApiClient, this);
 
     }

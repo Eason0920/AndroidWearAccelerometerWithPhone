@@ -59,35 +59,5 @@ public class ListenWearableDataService extends WearableListenerService {
         if (notificationManager != null) {
             notificationManager.notify(data.hashCode(), notificationBuilder.build());
         }
-
-//        File fileDir = getApplicationContext().getExternalFilesDir("accelerometer");
-//        if (fileDir != null && !fileDir.exists()) {
-//            fileDir.mkdir();
-//        }
-//
-//        String fileFullPath = String.format("%s/%s", fileDir, "accelerometer.txt");
-//        File f = new File(fileFullPath);
-//        CSVWriter writer;
-//        String[] contents;
-//
-//        try {
-//
-//            // File exist
-//            if (f.exists() && !f.isDirectory()) {
-//                writer = new CSVWriter(new FileWriter(fileFullPath, true));
-//            } else {    // File not exist
-//                writer = new CSVWriter(new FileWriter(fileFullPath));
-//                contents = new String[]{"acc_x", "acc_y", "acc_z"};
-//                writer.writeNext(contents);
-//            }
-//
-//            contents = new String(data).split(",");
-//
-//            writer.writeNext(contents);
-//            writer.close();
-//
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
     }
 }
