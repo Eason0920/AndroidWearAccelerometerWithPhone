@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="training.eason.androidwearaccelerometerwithphone">
+    package="training.eason.fftwithwearable">
 
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
@@ -14,7 +14,7 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <activity
-            android:name=".activities.MainActivity"
+            android:name="training.eason.fftwithwearable.activities.MainActivity"
             android:screenOrientation="portrait"
             android:launchMode="singleTask"
             android:excludeFromRecents="true">
@@ -26,7 +26,7 @@
         </activity>
         <!--<service android:name=".services.ListenWearableDataService" />-->
 
-        <service android:name=".services.ListenWearableDataService">
+        <service android:name="training.eason.fftwithwearable.services.ListenWearableDataService">
             <intent-filter>
                 <action android:name="com.google.android.gms.wearable.DATA_CHANGED" />
                 <action android:name="com.google.android.gms.wearable.MESSAGE_RECEIVED" />

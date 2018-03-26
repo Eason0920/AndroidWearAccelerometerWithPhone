@@ -1,4 +1,4 @@
-package training.eason.androidwearaccelerometerwithphone;
+package training.eason.fftwithwearable;
 
 import android.content.Context;
 import android.support.test.InstrumentationRegistry;

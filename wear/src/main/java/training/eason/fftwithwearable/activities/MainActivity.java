@@ -1,4 +1,4 @@
-package training.eason.androidwearaccelerometerwithphone.activities;
+package training.eason.fftwithwearable.activities;
 
 import android.content.Context;
 import android.hardware.Sensor;
@@ -34,8 +34,8 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 import butterknife.Unbinder;
-import training.eason.androidwearaccelerometerwithphone.R;
-import training.eason.androidwearaccelerometerwithphone.libs.LimitQueue;
+import training.eason.fftwithwearable.R;
+import training.eason.fftwithwearable.libs.LimitQueue;
 
 public class MainActivity extends WearableActivity implements GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
 

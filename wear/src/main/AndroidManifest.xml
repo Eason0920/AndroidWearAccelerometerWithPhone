@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="training.eason.androidwearaccelerometerwithphone">
+    package="training.eason.fftwithwearable">
 
     <uses-feature android:name="android.hardware.type.watch" />
 
@@ -27,7 +27,7 @@
             android:value="@integer/google_play_services_version" />
 
         <activity
-            android:name=".activities.MainActivity"
+            android:name="training.eason.fftwithwearable.activities.MainActivity"
             android:label="@string/app_name"
             android:screenOrientation="portrait">
             <intent-filter>

@@ -1,4 +1,4 @@
-package training.eason.androidwearaccelerometerwithphone.activities;
+package training.eason.fftwithwearable.activities;
 
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -12,7 +12,7 @@ import com.google.android.gms.wearable.DataApi;
 import com.google.android.gms.wearable.DataEventBuffer;
 import com.google.android.gms.wearable.Wearable;
 
-import training.eason.androidwearaccelerometerwithphone.R;
+import training.eason.fftwithwearable.R;
 
 public class MainActivity extends AppCompatActivity implements
         DataApi.DataListener,

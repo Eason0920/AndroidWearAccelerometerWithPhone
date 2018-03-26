@@ -1,4 +1,4 @@
-package training.eason.androidwearaccelerometerwithphone;
+package training.eason.fftwithwearable;
 
 import org.junit.Test;
 

@@ -1,4 +1,4 @@
-package training.eason.androidwearaccelerometerwithphone.libs;
+package training.eason.fftwithwearable.libs;
 
 import java.util.Collection;
 import java.util.Iterator;

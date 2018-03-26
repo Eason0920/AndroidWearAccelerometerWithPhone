@@ -1,4 +1,4 @@
-package training.eason.androidwearaccelerometerwithphone.services;
+package training.eason.fftwithwearable.services;
 
 import android.annotation.SuppressLint;
 import android.app.Notification;
@@ -12,8 +12,8 @@ import android.net.Uri;
 import com.google.android.gms.wearable.MessageEvent;
 import com.google.android.gms.wearable.WearableListenerService;
 
-import training.eason.androidwearaccelerometerwithphone.R;
-import training.eason.androidwearaccelerometerwithphone.activities.MainActivity;
+import training.eason.fftwithwearable.R;
+import training.eason.fftwithwearable.activities.MainActivity;
 
 public class ListenWearableDataService extends WearableListenerService {
     private static final String TAG = "ListenWearableDataService";
