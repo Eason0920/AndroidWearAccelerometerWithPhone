@@ -36,7 +36,7 @@ class ListenWearableDataService : WearableListenerService() {
         intent.action = System.currentTimeMillis().toString()
         intent.putExtra(DROWNING_EXTRA_NAME_VALUE, DROWNING_EXTRA_NAME_VALUE)
 
-        val notificationSound = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+        val notificationSound = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
         val pendingIntent = PendingIntent.getActivity(this, 0, intent,
                 PendingIntent.FLAG_UPDATE_CURRENT)       //重複使用此 PendingIntent 並更新內容
 
