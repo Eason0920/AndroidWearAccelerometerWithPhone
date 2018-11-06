@@ -2,15 +2,21 @@ package training.eason.fftwithwearable.activities
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.graphics.Color
 import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
+import android.location.Location
 import android.os.Bundle
 import android.support.wearable.activity.WearableActivity
 import android.util.Log
+import android.view.WindowManager
+import android.widget.Toast
 import com.google.android.gms.common.ConnectionResult
 import com.google.android.gms.common.api.GoogleApiClient
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationServices
 import com.google.android.gms.wearable.Node
 import com.google.android.gms.wearable.Wearable
 import kotlinx.android.synthetic.main.activity_main.*
@@ -20,6 +26,7 @@ import training.eason.fftwithwearable.libs.LimitQueue
 import java.lang.Math.abs
 import java.util.*
 import java.util.concurrent.TimeUnit
+import kotlin.concurrent.thread
 import kotlin.math.round
 
 class MainActivity : WearableActivity(), GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
@@ -28,11 +35,11 @@ class MainActivity : WearableActivity(), GoogleApiClient.ConnectionCallbacks, Go
         const val CALLER_EVENT = "/drowningNotify"      //傳送至手機的識別 key
         const val TAG = "MainActivity"
         const val ACC_DATA_SAMPLE_COUNT = 500       //每次進行傅立葉轉換的能量樣本數量
-        const val DROWNING_CHECK_COUNT = 5       //連續發生溺水次數
+        const val DROWNING_CHECK_COUNT = 3       //連續發生溺水次數
         const val FFT_SAMPLING_INTERVAL = 10     //傅立葉資料取樣間隔 (分割成 50Hz 用)
-        const val FFT_CHECK_BEGIN_INDEX = 4     //檢查是否有溺水的傅立葉數據起始判斷點
-        const val FFT_CHECK_END_INDEX = 10     //檢查是否有溺水的傅立葉數據結束判斷點
-        const val FFT_DROWNING_THRESHOLD = 4015     //傅立葉溺水閥值
+        const val FFT_CHECK_BEGIN_INDEX = 4     //檢查是否有溺水的傅立葉數據起始判斷點(包含)
+        const val FFT_CHECK_END_INDEX = 9     //檢查是否有溺水的傅立葉數據結束判斷點(不包含)
+        const val FFT_DROWNING_THRESHOLD = 715     //傅立葉溺水閥值
     }
 
     //存放加速度資料的類別物件
@@ -52,23 +59,34 @@ class MainActivity : WearableActivity(), GoogleApiClient.ConnectionCallbacks, Go
     private val mGoogleApiClient: GoogleApiClient? by lazy {
         GoogleApiClient.Builder(this)
                 .addApi(Wearable.API)
+                .addApi(LocationServices.API)
                 .addConnectionCallbacks(this)
                 .addOnConnectionFailedListener(this)
                 .build()
     }
 
     private lateinit var mSensorEventListener: SensorEventListener
+    private lateinit var fusedLocationClient: FusedLocationProviderClient
+    private val mWearableActivity: WearableActivity by lazy { this }
 
+    @SuppressLint("MissingPermission")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-
-
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
+        fusedLocationClient.lastLocation
+                .addOnSuccessListener { location: Location? ->
+                    // Got last known location. In some rare situations this can be null.
+                    val ss = ""
+                }
 
         accEventButton.setOnClickListener { onAccEventButtonClick() }
 
-        // Enables Always-on
+        //開啟微光模式
         setAmbientEnabled()
+
+        //需保持螢幕常亮，以避免微光模式下無法發送訊息至手機
+        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
     }
 
     override fun onStart() {
@@ -78,6 +96,7 @@ class MainActivity : WearableActivity(), GoogleApiClient.ConnectionCallbacks, Go
 
     override fun onPause() {
         accEventButton?.text = "開始"
+        currentPowerTextView?.text = ""
         mSensorManager?.unregisterListener(mSensorEventListener)
         super.onPause()
     }
@@ -130,10 +149,10 @@ class MainActivity : WearableActivity(), GoogleApiClient.ConnectionCallbacks, Go
                             }
                         }
 
-                        accSamplingRateTextView?.text = "Sampling rate per second: ${1000 / diffMillis}"
-                        accXTextView?.text = "X: $accX"
-                        accYTextView?.text = "Y: $accY"
-                        accZTextView?.text = "Z: $accZ"
+//                        accSamplingRateTextView?.text = "Sampling rate per second: ${1000 / diffMillis}"
+//                        accXTextView?.text = "X: $accX"
+//                        accYTextView?.text = "Y: $accY"
+//                        accZTextView?.text = "Z: $accZ"
                     }
                 }
 
@@ -148,6 +167,7 @@ class MainActivity : WearableActivity(), GoogleApiClient.ConnectionCallbacks, Go
         } else {
             mSensorManager?.unregisterListener(mSensorEventListener)
             accEventButton?.text = "開始"
+            currentPowerTextView?.text = ""
             mCurrentStatus = 0
 
             //每次按結束就清空資料集合
@@ -191,14 +211,23 @@ class MainActivity : WearableActivity(), GoogleApiClient.ConnectionCallbacks, Go
                 ?.map { round(it) }        //數據四捨五入
                 ?.sum()     //將範圍數據加總
 
-        mCheckDrowningQueue.offer(currentRangeValue!! > FFT_DROWNING_THRESHOLD)      //加總數據超過閥值視為溺水: true
+        //加總數據超過閥值視為溺水: true
+        mCheckDrowningQueue.offer(currentRangeValue!! > FFT_DROWNING_THRESHOLD)
+        currentPowerTextView?.text = "$currentRangeValue"
+        currentPowerTextView?.setTextColor(if (currentRangeValue > FFT_DROWNING_THRESHOLD) Color.RED else Color.WHITE)
+
 
         println(message = currentRangeValue)
         println(message = currentRangeValue > FFT_DROWNING_THRESHOLD)
 
         //檢查是否達到連續溺水警示次數並通知手機
         if ((mCheckDrowningQueue.size == DROWNING_CHECK_COUNT) && (!mCheckDrowningQueue.contains(false))) {
-            notifyMobile()
+            Toast.makeText(mWearableActivity, "發送溺水通報", Toast.LENGTH_LONG).show()
+
+            thread {
+                notifyMobile()
+            }.start()
+
         }
 
         //test
