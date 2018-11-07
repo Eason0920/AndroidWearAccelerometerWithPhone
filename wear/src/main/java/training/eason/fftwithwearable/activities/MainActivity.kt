@@ -27,7 +27,6 @@ import java.lang.Math.abs
 import java.util.*
 import java.util.concurrent.TimeUnit
 import kotlin.concurrent.thread
-import kotlin.math.round
 
 class MainActivity : WearableActivity(), GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
 
@@ -36,10 +35,10 @@ class MainActivity : WearableActivity(), GoogleApiClient.ConnectionCallbacks, Go
         const val TAG = "MainActivity"
         const val ACC_DATA_SAMPLE_COUNT = 500       //每次進行傅立葉轉換的能量樣本數量
         const val DROWNING_CHECK_COUNT = 3       //連續發生溺水次數
-        const val FFT_SAMPLING_INTERVAL = 10     //傅立葉資料取樣間隔 (分割成 50Hz 用)
-        const val FFT_CHECK_BEGIN_INDEX = 4     //檢查是否有溺水的傅立葉數據起始判斷點(包含)
-        const val FFT_CHECK_END_INDEX = 9     //檢查是否有溺水的傅立葉數據結束判斷點(不包含)
-        const val FFT_DROWNING_THRESHOLD = 715     //傅立葉溺水閥值
+        const val FFT_SAMPLING_INTERVAL = 20     //傅立葉資料取樣間隔 (分割成 25Hz 用)
+        const val FFT_CHECK_BEGIN_INDEX = 3     //檢查是否有溺水的傅立葉數據起始判斷點(包含)
+        const val FFT_CHECK_END_INDEX = 6     //檢查是否有溺水的傅立葉數據結束判斷點(不包含)
+        const val FFT_DROWNING_THRESHOLD = 0.7     //傅立葉溺水閥值
     }
 
     //存放加速度資料的類別物件
@@ -77,7 +76,6 @@ class MainActivity : WearableActivity(), GoogleApiClient.ConnectionCallbacks, Go
         fusedLocationClient.lastLocation
                 .addOnSuccessListener { location: Location? ->
                     // Got last known location. In some rare situations this can be null.
-                    val ss = ""
                 }
 
         accEventButton.setOnClickListener { onAccEventButtonClick() }
@@ -118,6 +116,7 @@ class MainActivity : WearableActivity(), GoogleApiClient.ConnectionCallbacks, Go
 
     private fun onAccEventButtonClick() {
         if (mCurrentStatus == 0) {
+            accWrapLayout.setBackgroundColor(Color.GREEN)
             accEventButton?.text = "停止"
             mCurrentStatus = 1
             mSensorEventListener = object : SensorEventListener {
@@ -133,7 +132,7 @@ class MainActivity : WearableActivity(), GoogleApiClient.ConnectionCallbacks, Go
                         val accY = sensorEvent.values[1]
                         val accZ = sensorEvent.values[2]
 
-                        //每收集 500 個點進行傅立葉轉換，判斷是否有發生溺水
+                        //將每份三軸資料進行加速度能量轉換
                         if (mAccDataAccessList.size < ACC_DATA_SAMPLE_COUNT) {
                             mAccDataAccessList.add(
                                     AccDataAccess(
@@ -144,6 +143,7 @@ class MainActivity : WearableActivity(), GoogleApiClient.ConnectionCallbacks, Go
                                             Math.sqrt(Math.pow(accX.toDouble(), 2.0) + Math.pow(accY.toDouble(), 2.0) + Math.pow(accZ.toDouble(), 2.0)))
                             )
 
+                            //達到 500 份資料後進行頻譜能量轉換
                             if (mAccDataAccessList.size == ACC_DATA_SAMPLE_COUNT) {
                                 convertFrequencyByFFT()
                             }
@@ -153,6 +153,11 @@ class MainActivity : WearableActivity(), GoogleApiClient.ConnectionCallbacks, Go
 //                        accXTextView?.text = "X: $accX"
 //                        accYTextView?.text = "Y: $accY"
 //                        accZTextView?.text = "Z: $accZ"
+
+//                        Log.e("HERE", "X: $accX")
+//                        Log.e("HERE", "Y: $accY")
+//                        Log.e("HERE", "Z: $accZ")
+//                        Log.e("HERE", "power: ${Math.sqrt(Math.pow(accX.toDouble(), 2.0) + Math.pow(accY.toDouble(), 2.0) + Math.pow(accZ.toDouble(), 2.0))}")
                     }
                 }
 
@@ -166,8 +171,9 @@ class MainActivity : WearableActivity(), GoogleApiClient.ConnectionCallbacks, Go
             mSensorManager?.registerListener(mSensorEventListener, mSensor, SensorManager.SENSOR_DELAY_FASTEST)
         } else {
             mSensorManager?.unregisterListener(mSensorEventListener)
+            accWrapLayout.setBackgroundColor(Color.DKGRAY)
             accEventButton?.text = "開始"
-            currentPowerTextView?.text = ""
+            currentPowerTextView?.text = "0.0"
             mCurrentStatus = 0
 
             //每次按結束就清空資料集合
@@ -202,33 +208,38 @@ class MainActivity : WearableActivity(), GoogleApiClient.ConnectionCallbacks, Go
         //利用 JTransforms FFT library 轉換為頻率數據
         val fftDo = DoubleFFT_1D(inputAccDataPowers.size.toLong())
         val fft = Arrays.copyOf(inputAccDataPowers, inputAccDataPowers.size)
-        fftDo.realForward(fft)
+        fftDo.realForward(fft)      //realForward: 轉頻譜能量(已排除一半對稱數值)、realForwardFull: 轉頻譜能量(包含一半對稱數值，長度 x 2)
 
-        //取得當前要判斷是否溺水的傅立葉頻率區間加總合
-        val currentRangeValue = fft?.map { abs(it) }        //數據轉正數
-                ?.filterIndexed { idx, _ -> idx % FFT_SAMPLING_INTERVAL == 0 }     //每次取樣數據 500 個，每 10 點取一次，最後取得 50 個點(50Hz)
-                ?.subList(FFT_CHECK_BEGIN_INDEX, FFT_CHECK_END_INDEX)       //取得要判斷的範圍數據
-                ?.map { round(it) }        //數據四捨五入
-                ?.sum()     //將範圍數據加總
+        //取得當前的頻率能量區間最大值
+        val rangeMaxValue =
+                fft?.map {
+                    (abs(it) / fft.size)     //數據轉正數，並進行常態化
+                }?.filterIndexed { idx, _ ->
+                    idx % FFT_SAMPLING_INTERVAL == 0      //每次取樣數據 500 個，每 20 點取一次，最後取得 25 個點(25Hz)
+                }?.subList(
+                        FFT_CHECK_BEGIN_INDEX, FFT_CHECK_END_INDEX      //取得要判斷的範圍數據
+                )?.map {
+                    "%.2f".format(it).toDouble()        //數據四捨五入到小數點第二位
+                }?.max()        //取得最大值
 
-        //加總數據超過閥值視為溺水: true
-        mCheckDrowningQueue.offer(currentRangeValue!! > FFT_DROWNING_THRESHOLD)
-        currentPowerTextView?.text = "$currentRangeValue"
-        currentPowerTextView?.setTextColor(if (currentRangeValue > FFT_DROWNING_THRESHOLD) Color.RED else Color.WHITE)
+        //最大值超過閥值視為溺水: true
+        mCheckDrowningQueue.offer(rangeMaxValue!! > FFT_DROWNING_THRESHOLD)
+        currentPowerTextView?.text = "$rangeMaxValue"
+//        currentPowerTextView?.setTextColor(if (rangeMaxValue > FFT_DROWNING_THRESHOLD) Color.RED else Color.WHITE)
 
-
-        println(message = currentRangeValue)
-        println(message = currentRangeValue > FFT_DROWNING_THRESHOLD)
+        Log.e("RangeMaxValue: ", rangeMaxValue.toString())
+        Log.e("IsNotify: ", (rangeMaxValue > FFT_DROWNING_THRESHOLD).toString())
 
         //檢查是否達到連續溺水警示次數並通知手機
         if ((mCheckDrowningQueue.size == DROWNING_CHECK_COUNT) && (!mCheckDrowningQueue.contains(false))) {
+            accWrapLayout.setBackgroundColor(Color.RED)     //背景更改為紅色
             Toast.makeText(mWearableActivity, "發送溺水通報", Toast.LENGTH_LONG).show()
 
             thread {
                 notifyMobile()
             }.start()
-
-        }
+        } else
+            accWrapLayout.setBackgroundColor(Color.GREEN)
 
         //test
 //        if (true) {

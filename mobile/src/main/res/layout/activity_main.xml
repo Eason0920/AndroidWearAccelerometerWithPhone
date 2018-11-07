@@ -3,25 +3,48 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:padding="20dp"
     tools:context="training.eason.fftwithwearable.activities.MainActivity">
 
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:orientation="horizontal">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="目前已連線數： "
+            android:textSize="16sp" />
+
+        <TextView
+            android:id="@+id/wearablesConnectedCountTextView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@android:color/holo_blue_dark"
+            android:textSize="18sp" />
+
+    </LinearLayout>
+
     <TextView
-        android:id="@+id/drowningLabelTextView"
+        android:id="@+id/drowningWarningTextView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="30dp"
-        android:text="疑似溺水事件，請注意！"
+        android:layout_centerInParent="true"
+        android:layout_marginTop="36dp"
+        android:text="疑似發生溺水事件\n請確認"
         android:textAlignment="center"
         android:textColor="@android:color/holo_red_dark"
         android:textSize="30sp"
         android:visibility="invisible" />
 
     <Button
-        android:id="@+id/drowningNoticeButton"
+        android:id="@+id/drowningConfirmButton"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
-        android:text="我知道了" />
+        android:text="我知道了"
+        android:textSize="20sp" />
 
 </RelativeLayout>

@@ -1,4 +1,4 @@
 <resources>
-    <string name="app_name">傅立葉溺水通報(Wear)</string>
+    <string name="app_name">溺水通報監控系統</string>
     <string name="title_activity_main2">Main2Activity</string>
 </resources>

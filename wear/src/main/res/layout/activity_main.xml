@@ -3,6 +3,7 @@
 <android.support.wear.widget.BoxInsetLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/accWrapLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/dark_grey"
@@ -23,10 +24,13 @@
 
             <Button
                 android:id="@+id/accEventButton"
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="10dp"
-                android:text="開始" />
+                android:layout_marginBottom="20dp"
+                android:text="開始"
+                android:textColor="@android:color/white"
+                android:textSize="20sp"
+                android:textStyle="bold" />
 
             <LinearLayout
                 android:layout_width="wrap_content"
@@ -38,13 +42,18 @@
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="5dp"
                     android:text="目前能量： "
-                    android:textSize="20dp" />
+                    android:textColor="@android:color/white"
+                    android:textSize="20sp"
+                    android:textStyle="bold" />
 
                 <TextView
                     android:id="@+id/currentPowerTextView"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textSize="20dp" />
+                    android:textColor="@android:color/white"
+                    android:text="0.0"
+                    android:textSize="30sp"
+                    android:textStyle="bold" />
             </LinearLayout>
 
 
@@ -52,22 +61,35 @@
                 android:id="@+id/accSamplingRateTextView"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="10dp" />
+                android:layout_gravity="center_horizontal"
+                android:layout_marginBottom="10dp"
+                android:textColor="@android:color/white" />
 
             <TextView
                 android:id="@+id/accXTextView"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content" />
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:textColor="@android:color/white"
+                android:textSize="20sp"
+                android:textStyle="bold" />
 
             <TextView
                 android:id="@+id/accYTextView"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content" />
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:textColor="@android:color/white"
+                android:textSize="20sp"
+                android:textStyle="bold" />
 
             <TextView
                 android:id="@+id/accZTextView"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content" />
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:textSize="20sp"
+                android:textStyle="bold" />
 
         </LinearLayout>
 
