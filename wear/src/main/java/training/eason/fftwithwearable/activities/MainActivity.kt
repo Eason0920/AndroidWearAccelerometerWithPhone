@@ -52,7 +52,7 @@ class MainActivity : WearableActivity(), GoogleApiClient.ConnectionCallbacks, Go
     private val mSensor: Sensor? by lazy { mSensorManager?.getDefaultSensor(Sensor.TYPE_ACCELEROMETER) }
     private var mCurrentStatus = 0
     private var mPrevMillis = 0L
-    private var mNode: Node? = null
+    private var mPairPhoneNode: Node? = null
     private val mAccDataAccessList = arrayListOf<AccDataAccess>()
     private val mCheckDrowningQueue = LimitQueue<Boolean>(DROWNING_CHECK_COUNT)
     private val mGoogleApiClient: GoogleApiClient? by lazy {
@@ -65,15 +65,16 @@ class MainActivity : WearableActivity(), GoogleApiClient.ConnectionCallbacks, Go
     }
 
     private lateinit var mSensorEventListener: SensorEventListener
-    private lateinit var fusedLocationClient: FusedLocationProviderClient
+    private lateinit var mFusedLocationClient: FusedLocationProviderClient
+    private lateinit var mLocalNode: Node
     private val mWearableActivity: WearableActivity by lazy { this }
 
     @SuppressLint("MissingPermission")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
-        fusedLocationClient.lastLocation
+        mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
+        mFusedLocationClient.lastLocation
                 .addOnSuccessListener { location: Location? ->
                     // Got last known location. In some rare situations this can be null.
                 }
@@ -183,13 +184,18 @@ class MainActivity : WearableActivity(), GoogleApiClient.ConnectionCallbacks, Go
     }
 
     /**
-     * 取得與配對的行動裝置連線用的節點
+     * 取得與配對的行動裝置連線用的節點與自己的節點
      */
     private fun resolveNode() {
+        Wearable.NodeApi.getLocalNode(mGoogleApiClient)
+                .setResultCallback {
+                    mLocalNode = it.node
+                }
+
         Wearable.NodeApi.getConnectedNodes(mGoogleApiClient)
                 .setResultCallback { nodesResult ->
                     nodesResult.nodes.forEach {
-                        mNode = it
+                        mPairPhoneNode = it
                     }
                 }
     }
@@ -254,14 +260,14 @@ class MainActivity : WearableActivity(), GoogleApiClient.ConnectionCallbacks, Go
      * 發生溺水，通知手機
      */
     private fun notifyMobile() {
-        if (mNode != null && mGoogleApiClient != null) {
-            val message = "drowning notify"
+        if (mPairPhoneNode != null && mGoogleApiClient != null) {
+            val localNodeId = mLocalNode.id
 
             Wearable.MessageApi.sendMessage(
                     mGoogleApiClient,
-                    mNode?.id,
+                    mPairPhoneNode?.id,
                     CALLER_EVENT,
-                    message.toByteArray())
+                    localNodeId.toByteArray())
                     .setResultCallback { sendMessageResult ->
                         if (!sendMessageResult.status.isSuccess) {
                             Log.e(TAG, "sendMessage failure statusCode: ${sendMessageResult.status.statusCode}")
@@ -269,7 +275,7 @@ class MainActivity : WearableActivity(), GoogleApiClient.ConnectionCallbacks, Go
                     }
 
         } else {
-            Log.e("mNode: ", mNode?.toString())
+            Log.e("mPairPhoneNode: ", mPairPhoneNode?.toString())
             Log.e("mGoogleApiClient: ", mGoogleApiClient.toString())
         }
     }

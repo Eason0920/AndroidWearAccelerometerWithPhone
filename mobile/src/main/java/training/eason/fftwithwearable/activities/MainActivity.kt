@@ -58,6 +58,13 @@ class MainActivity : AppCompatActivity() {
         thread {
             Wearable.NodeApi.getConnectedNodes(mGoogleApiClient).await().nodes
                     ?.also { _nodeList ->
+                        _nodeList.forEach { _node ->
+                            val wearNodeId = _node.id
+                            val xx = ""
+                        }
+
+
+
                         wearablesConnectedCountTextView.apply {
                             post {
                                 text = _nodeList.size.toString()

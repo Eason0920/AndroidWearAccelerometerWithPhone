@@ -54,6 +54,7 @@ class ListenWearableDataService : WearableListenerService() {
         registerReceiver(mDrowningReceiver, IntentFilter(DROWNING_EXTRA_NAME_VALUE))
 
         val data = messageEvent.data
+        val sourceNodeId = messageEvent.sourceNodeId
         val intent = Intent(this, MainActivity::class.java)
 
 //        //關閉 Intent 啟動動畫
