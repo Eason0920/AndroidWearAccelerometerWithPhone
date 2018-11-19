@@ -11,7 +11,9 @@ import android.location.Location
 import android.os.Bundle
 import android.support.wearable.activity.WearableActivity
 import android.util.Log
+import android.view.View
 import android.view.WindowManager
+import android.widget.RadioButton
 import android.widget.Toast
 import com.google.android.gms.common.ConnectionResult
 import com.google.android.gms.common.api.GoogleApiClient
@@ -38,7 +40,7 @@ class MainActivity : WearableActivity(), GoogleApiClient.ConnectionCallbacks, Go
         const val FFT_SAMPLING_INTERVAL = 20     //傅立葉資料取樣間隔 (分割成 25Hz 用)
         const val FFT_CHECK_BEGIN_INDEX = 3     //檢查是否有溺水的傅立葉數據起始判斷點(包含)
         const val FFT_CHECK_END_INDEX = 6     //檢查是否有溺水的傅立葉數據結束判斷點(不包含)
-        const val FFT_DROWNING_THRESHOLD = 0.7     //傅立葉溺水閥值
+        const val FFT_DROWNING_THRESHOLD = 0.2     //傅立葉溺水閥值
     }
 
     //存放加速度資料的類別物件
@@ -67,6 +69,7 @@ class MainActivity : WearableActivity(), GoogleApiClient.ConnectionCallbacks, Go
     private lateinit var mSensorEventListener: SensorEventListener
     private lateinit var mFusedLocationClient: FusedLocationProviderClient
     private lateinit var mLocalNode: Node
+    private var mCurrentJoinMonitorStatus = false
     private val mWearableActivity: WearableActivity by lazy { this }
 
     @SuppressLint("MissingPermission")
@@ -81,6 +84,77 @@ class MainActivity : WearableActivity(), GoogleApiClient.ConnectionCallbacks, Go
 
         accEventButton.setOnClickListener { onAccEventButtonClick() }
 
+        //發送游泳者監控要求
+        sendMonitorButton.setOnClickListener {
+            sexRadioGroup.findViewById<RadioButton>(sexRadioGroup.checkedRadioButtonId)?.also { _sexRadioButton ->
+                if (mPairPhoneNode != null && mGoogleApiClient != null) {
+                    val message = "register,${_sexRadioButton.text}"
+
+                    Wearable.MessageApi.sendMessage(
+                            mGoogleApiClient,
+                            mPairPhoneNode?.id,
+                            CALLER_EVENT,
+                            message.toByteArray())
+                            .setResultCallback { sendMessageResult ->
+                                if (!sendMessageResult.status.isSuccess)
+                                    Log.e(TAG, "sendMessage failure statusCode: ${sendMessageResult.status.statusCode}")
+                                else {
+                                    joinMonitorLayout.visibility = View.GONE
+                                    deleteMonitorButton.visibility = View.VISIBLE
+                                    mCurrentJoinMonitorStatus = true
+                                }
+                            }
+                }
+            } ?: kotlin.run {
+                Toast.makeText(this@MainActivity, "請先選擇性別資料", Toast.LENGTH_LONG).show()
+            }
+
+        }
+
+        //刪除游泳者監控要求
+        deleteMonitorButton.setOnClickListener {
+            if (mPairPhoneNode != null && mGoogleApiClient != null) {
+                val message = "delete"
+
+                Wearable.MessageApi.sendMessage(
+                        mGoogleApiClient,
+                        mPairPhoneNode?.id,
+                        CALLER_EVENT,
+                        message.toByteArray())
+                        .setResultCallback { sendMessageResult ->
+                            if (!sendMessageResult.status.isSuccess)
+                                Log.e(TAG, "sendMessage failure statusCode: ${sendMessageResult.status.statusCode}")
+                            else {
+                                joinMonitorLayout.visibility = View.VISIBLE
+                                deleteMonitorButton.visibility = View.GONE
+                                sexRadioGroup.clearCheck()
+                                mCurrentJoinMonitorStatus = false
+                            }
+                        }
+            }
+        }
+
+        //切換至游泳能量監控畫面
+        switchMonitorButton.setOnClickListener {
+            joinMonitorLayout.visibility = View.GONE
+            deleteMonitorButton.visibility = View.GONE
+            drowningMonitorLayout.visibility = View.VISIBLE
+            switchMonitorButton.visibility = View.GONE
+        }
+
+        backJoinLayoutButton.setOnClickListener {
+            drowningMonitorLayout.visibility = View.GONE
+            switchMonitorButton.visibility = View.VISIBLE
+
+            if (mCurrentJoinMonitorStatus) {
+                deleteMonitorButton.visibility = View.VISIBLE
+                joinMonitorLayout.visibility = View.GONE
+            } else {
+                deleteMonitorButton.visibility = View.GONE
+                joinMonitorLayout.visibility = View.VISIBLE
+            }
+        }
+
         //開啟微光模式
         setAmbientEnabled()
 
@@ -94,7 +168,7 @@ class MainActivity : WearableActivity(), GoogleApiClient.ConnectionCallbacks, Go
     }
 
     override fun onPause() {
-        accEventButton?.text = "開始"
+        accEventButton?.text = "開始游泳監控"
         currentPowerTextView?.text = ""
         mSensorManager?.unregisterListener(mSensorEventListener)
         super.onPause()
@@ -118,7 +192,7 @@ class MainActivity : WearableActivity(), GoogleApiClient.ConnectionCallbacks, Go
     private fun onAccEventButtonClick() {
         if (mCurrentStatus == 0) {
             accWrapLayout.setBackgroundColor(Color.GREEN)
-            accEventButton?.text = "停止"
+            accEventButton?.text = "停止游泳監控"
             mCurrentStatus = 1
             mSensorEventListener = object : SensorEventListener {
 
@@ -173,7 +247,7 @@ class MainActivity : WearableActivity(), GoogleApiClient.ConnectionCallbacks, Go
         } else {
             mSensorManager?.unregisterListener(mSensorEventListener)
             accWrapLayout.setBackgroundColor(Color.DKGRAY)
-            accEventButton?.text = "開始"
+            accEventButton?.text = "開始游泳監控"
             currentPowerTextView?.text = "0.0"
             mCurrentStatus = 0
 
@@ -261,13 +335,13 @@ class MainActivity : WearableActivity(), GoogleApiClient.ConnectionCallbacks, Go
      */
     private fun notifyMobile() {
         if (mPairPhoneNode != null && mGoogleApiClient != null) {
-            val localNodeId = mLocalNode.id
+            val message = "drowning"
 
             Wearable.MessageApi.sendMessage(
                     mGoogleApiClient,
                     mPairPhoneNode?.id,
                     CALLER_EVENT,
-                    localNodeId.toByteArray())
+                    message.toByteArray())
                     .setResultCallback { sendMessageResult ->
                         if (!sendMessageResult.status.isSuccess) {
                             Log.e(TAG, "sendMessage failure statusCode: ${sendMessageResult.status.statusCode}")

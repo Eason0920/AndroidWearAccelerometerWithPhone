@@ -2,20 +2,20 @@ package training.eason.fftwithwearable.activities
 
 import android.content.Context
 import android.content.Intent
+import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.support.v7.app.AppCompatActivity
-import android.util.Log
 import android.view.View
+import android.widget.Button
+import android.widget.GridLayout
 import com.google.android.gms.common.api.GoogleApiClient
 import com.google.android.gms.wearable.Wearable
 import kotlinx.android.synthetic.main.activity_main.*
 import training.eason.fftwithwearable.R
-import training.eason.fftwithwearable.services.ListenWearableDataService.Companion.DROWNING_EXTRA_NAME_VALUE
 import training.eason.fftwithwearable.services.ListenWearableDataService.Companion.VIBRATION_MILLIS
-import kotlin.concurrent.thread
 
 class MainActivity : AppCompatActivity() {
     companion object {
@@ -36,7 +36,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
         mGoogleApiClient?.connect()
         detectConnectedWearables()
-        detectDrowningNotify()
+        detectEvents()
 
         drowningConfirmButton.setOnClickListener {
             drowningWarningTextView!!.visibility = View.INVISIBLE
@@ -51,45 +51,104 @@ class MainActivity : AppCompatActivity() {
 
     override fun onNewIntent(intent: Intent?) {
         super.onNewIntent(intent)
-        detectDrowningNotify(intent)
+        detectEvents(intent)
     }
 
     private fun detectConnectedWearables() {
-        thread {
-            Wearable.NodeApi.getConnectedNodes(mGoogleApiClient).await().nodes
-                    ?.also { _nodeList ->
-                        _nodeList.forEach { _node ->
-                            val wearNodeId = _node.id
-                            val xx = ""
+//        thread {
+//            Wearable.NodeApi.getConnectedNodes(mGoogleApiClient).await().nodes
+//                    ?.also { _nodeList ->
+//                        wearablesConnectedCountTextView.apply {
+//                            post {
+//                                text = _nodeList.size.toString()
+//                            }
+//                        }
+//                    }
+//        }
+
+        val sharedPreferences = this.getSharedPreferences("drowningManager", Context.MODE_PRIVATE)
+        sharedPreferences.getString("registerList", "").split(",")
+                .forEach {
+                    if (it.isNotBlank()) {
+                        val button = Button(this).apply {
+                            text = it
+                            textSize = 20f
+                            setPadding(20, 20, 20, 20)
+                            setBackgroundColor(Color.GREEN)
+                            layoutParams = GridLayout.LayoutParams().apply {
+                                setMargins(10, 10, 10, 10)
+                                width = GridLayout.LayoutParams.WRAP_CONTENT
+                                height = GridLayout.LayoutParams.WRAP_CONTENT
+                            }
                         }
 
+                        registerListGridLayout.addView(button)
+                    }
+                }
 
+        wearablesConnectedCountTextView.text = registerListGridLayout.childCount.toString()
+    }
 
-                        wearablesConnectedCountTextView.apply {
-                            post {
-                                text = _nodeList.size.toString()
+    private fun detectEvents(newIntent: Intent? = null) {
+        val intentObj = newIntent ?: intent
+
+        intentObj?.getStringExtra("event")?.also { _event ->
+            when (_event) {
+                "register", "delete", "drowning" -> {
+                    val drowningId = intentObj.getStringExtra("value")
+                    registerListGridLayout.removeAllViews()
+                    val sharedPreferences = this.getSharedPreferences("drowningManager", Context.MODE_PRIVATE)
+                    sharedPreferences.getString("registerList", "").split(",")
+                            .forEach {
+                                if (it.isNotBlank()) {
+                                    val button = Button(this).apply {
+                                        text = it
+                                        textSize = 20f
+                                        setPadding(20, 20, 20, 20)
+                                        setBackgroundColor(
+                                                if (it.split(":")[0] == drowningId)
+                                                    Color.RED
+                                                else
+                                                    Color.GREEN)
+                                        layoutParams = GridLayout.LayoutParams().apply {
+                                            setMargins(10, 10, 10, 10)
+                                            width = GridLayout.LayoutParams.WRAP_CONTENT
+                                            height = GridLayout.LayoutParams.WRAP_CONTENT
+                                        }
+                                    }
+
+                                    registerListGridLayout.addView(button)
+                                }
+                            }
+
+                    wearablesConnectedCountTextView.text = registerListGridLayout.childCount.toString()
+
+                    if (_event == "drowning") {
+                        drowningWarningTextView!!.visibility = View.VISIBLE
+                        mVibrator?.also { _vibrator ->
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                                _vibrator.vibrate(VibrationEffect.createOneShot(VIBRATION_MILLIS, VibrationEffect.DEFAULT_AMPLITUDE))
+                            } else {
+                                _vibrator.vibrate(VIBRATION_MILLIS)
                             }
                         }
                     }
-        }
-    }
-
-    private fun detectDrowningNotify(newIntent: Intent? = null) {
-        val intentObj = newIntent ?: intent
-
-        intentObj?.getStringExtra(DROWNING_EXTRA_NAME_VALUE)?.also {
-            if (it == DROWNING_EXTRA_NAME_VALUE) {
-                Log.e(TAG, "drowning coming")
-
-                drowningWarningTextView!!.visibility = View.VISIBLE
-                mVibrator?.also { _vibrator ->
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                        _vibrator.vibrate(VibrationEffect.createOneShot(VIBRATION_MILLIS, VibrationEffect.DEFAULT_AMPLITUDE))
-                    } else {
-                        _vibrator.vibrate(VIBRATION_MILLIS)
-                    }
                 }
             }
+
+
+//            if (_event == DROWNING_EXTRA_NAME_VALUE) {
+//                Log.e(TAG, "drowning coming")
+//
+//                drowningWarningTextView!!.visibility = View.VISIBLE
+//                mVibrator?.also { _vibrator ->
+//                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+//                        _vibrator.vibrate(VibrationEffect.createOneShot(VIBRATION_MILLIS, VibrationEffect.DEFAULT_AMPLITUDE))
+//                    } else {
+//                        _vibrator.vibrate(VIBRATION_MILLIS)
+//                    }
+//                }
+//            }
         }
     }
 }
