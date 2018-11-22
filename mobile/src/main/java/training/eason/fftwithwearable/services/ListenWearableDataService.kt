@@ -62,41 +62,46 @@ class ListenWearableDataService : WearableListenerService() {
                 //將游泳資料寫入 SharedPreferences (格式 - 來源ID:性別)
                 val sharedPreferences = this.getSharedPreferences("drowningManager", Context.MODE_PRIVATE)
                 var registerListString = sharedPreferences.getString("registerList", "")
-                registerListString += "$sourceNodeId:${eventString.split(",")[1]},"
-                val editor = sharedPreferences.edit()
 
-                //先進行移除動作再進行寫入動作，確保資料正確寫入
-                if (editor.remove("registerList").commit()) {
-                    editor.putString("registerList", registerListString).apply()
+                //判斷來源 id 不存在已註冊的 id 列表中才進行註冊
+                if (!registerListString.contains(sourceNodeId)) {
+//                    registerListString += "$sourceNodeId:${eventString.split(",")[1]},D9EG789:女性,JSF63E5:女性,K1WQ52A:男性,L66RFNZ:男性,"
+                    registerListString += "$sourceNodeId:${eventString.split(",")[1]},"
+                    val editor = sharedPreferences.edit()
+
+                    //先進行移除動作再進行寫入動作，確保資料正確寫入
+                    if (editor.remove("registerList").commit()) {
+                        editor.putString("registerList", registerListString).apply()
+                    }
+
+                    val intent = Intent(this, MainActivity::class.java)
+
+                    //利用當前系統時間毫秒數來讓每次產生的 Intent 都視為是不同的動作
+                    //以解決發生接收到連續推播後只能開啟第一則，無法開啟第二則之後的問題
+                    intent.action = System.currentTimeMillis().toString()
+                    intent.putExtra("event", "register")
+
+                    val notificationSound = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
+                    val pendingIntent = PendingIntent.getActivity(this, 0, intent,
+                            PendingIntent.FLAG_UPDATE_CURRENT)       //重複使用此 PendingIntent 並更新內容
+
+                    val notificationBuilder = Notification.Builder(this)
+
+                    notificationBuilder.setSmallIcon(R.mipmap.ic_launcher)
+                    notificationBuilder.setContentTitle("事件通報")
+                    notificationBuilder.setContentText("【新增】一筆游泳者資料！")
+                    notificationBuilder.setAutoCancel(true)
+                    notificationBuilder.setSound(notificationSound)
+                    notificationBuilder.setContentIntent(pendingIntent)
+                    notificationBuilder.setPriority(Notification.PRIORITY_HIGH)
+                    notificationBuilder.setVisibility(Notification.VISIBILITY_PUBLIC)
+
+                    val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+
+                    //利用不同的 HashCode 來產生每次都不同的通知代號
+                    //以達到 Android 系統能夠保留之前的通知紀錄直到使用者觸發
+                    notificationManager.notify(messageEvent.hashCode(), notificationBuilder.build())
                 }
-
-                val intent = Intent(this, MainActivity::class.java)
-
-                //利用當前系統時間毫秒數來讓每次產生的 Intent 都視為是不同的動作
-                //以解決發生接收到連續推播後只能開啟第一則，無法開啟第二則之後的問題
-                intent.action = System.currentTimeMillis().toString()
-                intent.putExtra("event", "register")
-
-                val notificationSound = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
-                val pendingIntent = PendingIntent.getActivity(this, 0, intent,
-                        PendingIntent.FLAG_UPDATE_CURRENT)       //重複使用此 PendingIntent 並更新內容
-
-                val notificationBuilder = Notification.Builder(this)
-
-                notificationBuilder.setSmallIcon(R.mipmap.ic_launcher)
-                notificationBuilder.setContentTitle("溺水通報系統")
-                notificationBuilder.setContentText("新增一筆游泳者資料！")
-                notificationBuilder.setAutoCancel(true)
-                notificationBuilder.setSound(notificationSound)
-                notificationBuilder.setContentIntent(pendingIntent)
-                notificationBuilder.setPriority(Notification.PRIORITY_HIGH)
-                notificationBuilder.setVisibility(Notification.VISIBILITY_PUBLIC)
-
-                val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-
-                //利用不同的 HashCode 來產生每次都不同的通知代號
-                //以達到 Android 系統能夠保留之前的通知紀錄直到使用者觸發
-                notificationManager.notify(messageEvent.hashCode(), notificationBuilder.build())
             }
             eventString.startsWith("delete") -> {
 
@@ -131,8 +136,8 @@ class ListenWearableDataService : WearableListenerService() {
                 val notificationBuilder = Notification.Builder(this)
 
                 notificationBuilder.setSmallIcon(R.mipmap.ic_launcher)
-                notificationBuilder.setContentTitle("溺水通報系統")
-                notificationBuilder.setContentText("刪除一筆游泳者資料！")
+                notificationBuilder.setContentTitle("事件通報")
+                notificationBuilder.setContentText("【刪除】一筆游泳者資料！")
                 notificationBuilder.setAutoCancel(true)
                 notificationBuilder.setSound(notificationSound)
                 notificationBuilder.setContentIntent(pendingIntent)
@@ -152,7 +157,7 @@ class ListenWearableDataService : WearableListenerService() {
                 //以解決發生接收到連續推播後只能開啟第一則，無法開啟第二則之後的問題
                 intent.action = System.currentTimeMillis().toString()
                 intent.putExtra("event", "drowning")
-                intent.putExtra("value", sourceNodeId)
+                intent.putExtra("drowningId", sourceNodeId)
 
                 val notificationSound = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
                 val pendingIntent = PendingIntent.getActivity(this, 0, intent,
@@ -161,8 +166,8 @@ class ListenWearableDataService : WearableListenerService() {
                 val notificationBuilder = Notification.Builder(this)
 
                 notificationBuilder.setSmallIcon(R.mipmap.ic_launcher)
-                notificationBuilder.setContentTitle("溺水通報系統")
-                notificationBuilder.setContentText("疑似發生溺水事件，請注意！")
+                notificationBuilder.setContentTitle("事件通報")
+                notificationBuilder.setContentText("【疑似發生溺水事件】，請注意！")
                 notificationBuilder.setAutoCancel(true)
                 notificationBuilder.setSound(notificationSound)
                 notificationBuilder.setContentIntent(pendingIntent)

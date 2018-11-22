@@ -29,6 +29,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private val mVibrator: Vibrator? by lazy { getSystemService(Context.VIBRATOR_SERVICE) as Vibrator }
+    private val mCurrentDrowningIdSet = mutableSetOf<String>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -41,6 +42,10 @@ class MainActivity : AppCompatActivity() {
         drowningConfirmButton.setOnClickListener {
             drowningWarningTextView!!.visibility = View.INVISIBLE
             mVibrator?.cancel()
+            mCurrentDrowningIdSet.clear()
+            for (i in 0 until registerListGridLayout.childCount) {
+                (registerListGridLayout.getChildAt(i) as? Button)?.setBackgroundColor(Color.GREEN)
+            }
         }
     }
 
@@ -95,7 +100,10 @@ class MainActivity : AppCompatActivity() {
         intentObj?.getStringExtra("event")?.also { _event ->
             when (_event) {
                 "register", "delete", "drowning" -> {
-                    val drowningId = intentObj.getStringExtra("value")
+                    intentObj.getStringExtra("drowningId")?.also { _drowningId ->
+                        mCurrentDrowningIdSet.add(_drowningId)
+                    }
+
                     registerListGridLayout.removeAllViews()
                     val sharedPreferences = this.getSharedPreferences("drowningManager", Context.MODE_PRIVATE)
                     sharedPreferences.getString("registerList", "").split(",")
@@ -106,7 +114,7 @@ class MainActivity : AppCompatActivity() {
                                         textSize = 20f
                                         setPadding(20, 20, 20, 20)
                                         setBackgroundColor(
-                                                if (it.split(":")[0] == drowningId)
+                                                if (mCurrentDrowningIdSet.contains(it.split(":")[0]))
                                                     Color.RED
                                                 else
                                                     Color.GREEN)
@@ -135,20 +143,6 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
             }
-
-
-//            if (_event == DROWNING_EXTRA_NAME_VALUE) {
-//                Log.e(TAG, "drowning coming")
-//
-//                drowningWarningTextView!!.visibility = View.VISIBLE
-//                mVibrator?.also { _vibrator ->
-//                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-//                        _vibrator.vibrate(VibrationEffect.createOneShot(VIBRATION_MILLIS, VibrationEffect.DEFAULT_AMPLITUDE))
-//                    } else {
-//                        _vibrator.vibrate(VIBRATION_MILLIS)
-//                    }
-//                }
-//            }
         }
     }
 }

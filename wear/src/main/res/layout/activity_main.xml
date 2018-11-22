@@ -23,7 +23,7 @@
             android:orientation="vertical">
 
             <LinearLayout
-                android:id="@+id/joinMonitorLayout"
+                android:id="@+id/registerMonitorLayout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical">
@@ -58,23 +58,41 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="3dp"
-                    android:text="發送游泳監控資料"
+                    android:text="發送游泳者資料"
                     android:textColor="@android:color/white"
                     android:textSize="14sp"
                     android:textStyle="bold" />
 
             </LinearLayout>
 
-            <Button
-                android:id="@+id/deleteMonitorButton"
+            <LinearLayout
+                android:id="@+id/unRegisteredMonitorLayout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="3dp"
-                android:text="刪除游泳監控資料"
-                android:textColor="@android:color/white"
-                android:textSize="14sp"
-                android:textStyle="bold"
-                android:visibility="gone" />
+                android:orientation="vertical"
+                android:visibility="gone">
+
+                <TextView
+                    android:id="@+id/connectedMonitorTextView"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="10dp"
+                    android:text="溺水通報已連線成功"
+                    android:textColor="@android:color/white"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
+                <Button
+                    android:id="@+id/unRegisteredMonitorButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="3dp"
+                    android:text="刪除游泳者資料"
+                    android:textColor="@android:color/white"
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
+
+            </LinearLayout>
 
             <Button
                 android:id="@+id/switchMonitorButton"
@@ -94,7 +112,7 @@
                 android:visibility="gone">
 
                 <Button
-                    android:id="@+id/backJoinLayoutButton"
+                    android:id="@+id/backRegisterLayoutButton"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="3dp"
@@ -139,38 +157,38 @@
 
 
                 <!--<TextView-->
-                    <!--android:id="@+id/accSamplingRateTextView"-->
-                    <!--android:layout_width="wrap_content"-->
-                    <!--android:layout_height="wrap_content"-->
-                    <!--android:layout_gravity="center_horizontal"-->
-                    <!--android:layout_marginBottom="10dp"-->
-                    <!--android:textColor="@android:color/white" />-->
+                <!--android:id="@+id/accSamplingRateTextView"-->
+                <!--android:layout_width="wrap_content"-->
+                <!--android:layout_height="wrap_content"-->
+                <!--android:layout_gravity="center_horizontal"-->
+                <!--android:layout_marginBottom="10dp"-->
+                <!--android:textColor="@android:color/white" />-->
 
                 <!--<TextView-->
-                    <!--android:id="@+id/accXTextView"-->
-                    <!--android:layout_width="wrap_content"-->
-                    <!--android:layout_height="wrap_content"-->
-                    <!--android:layout_gravity="center_horizontal"-->
-                    <!--android:textColor="@android:color/white"-->
-                    <!--android:textSize="20sp"-->
-                    <!--android:textStyle="bold" />-->
+                <!--android:id="@+id/accXTextView"-->
+                <!--android:layout_width="wrap_content"-->
+                <!--android:layout_height="wrap_content"-->
+                <!--android:layout_gravity="center_horizontal"-->
+                <!--android:textColor="@android:color/white"-->
+                <!--android:textSize="20sp"-->
+                <!--android:textStyle="bold" />-->
 
                 <!--<TextView-->
-                    <!--android:id="@+id/accYTextView"-->
-                    <!--android:layout_width="wrap_content"-->
-                    <!--android:layout_height="wrap_content"-->
-                    <!--android:layout_gravity="center_horizontal"-->
-                    <!--android:textColor="@android:color/white"-->
-                    <!--android:textSize="20sp"-->
-                    <!--android:textStyle="bold" />-->
+                <!--android:id="@+id/accYTextView"-->
+                <!--android:layout_width="wrap_content"-->
+                <!--android:layout_height="wrap_content"-->
+                <!--android:layout_gravity="center_horizontal"-->
+                <!--android:textColor="@android:color/white"-->
+                <!--android:textSize="20sp"-->
+                <!--android:textStyle="bold" />-->
 
                 <!--<TextView-->
-                    <!--android:id="@+id/accZTextView"-->
-                    <!--android:layout_width="wrap_content"-->
-                    <!--android:layout_height="wrap_content"-->
-                    <!--android:layout_gravity="center_horizontal"-->
-                    <!--android:textSize="20sp"-->
-                    <!--android:textStyle="bold" />-->
+                <!--android:id="@+id/accZTextView"-->
+                <!--android:layout_width="wrap_content"-->
+                <!--android:layout_height="wrap_content"-->
+                <!--android:layout_gravity="center_horizontal"-->
+                <!--android:textSize="20sp"-->
+                <!--android:textStyle="bold" />-->
 
             </LinearLayout>
 

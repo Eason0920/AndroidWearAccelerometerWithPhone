@@ -29,6 +29,7 @@ import java.lang.Math.abs
 import java.util.*
 import java.util.concurrent.TimeUnit
 import kotlin.concurrent.thread
+import kotlin.concurrent.timerTask
 
 class MainActivity : WearableActivity(), GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
 
@@ -69,7 +70,8 @@ class MainActivity : WearableActivity(), GoogleApiClient.ConnectionCallbacks, Go
     private lateinit var mSensorEventListener: SensorEventListener
     private lateinit var mFusedLocationClient: FusedLocationProviderClient
     private lateinit var mLocalNode: Node
-    private var mCurrentJoinMonitorStatus = false
+    private var mPromptUnRegisteredTimer: Timer? = null
+    private var mIsRegisteredMonitorStatus = false
     private val mWearableActivity: WearableActivity by lazy { this }
 
     @SuppressLint("MissingPermission")
@@ -99,9 +101,9 @@ class MainActivity : WearableActivity(), GoogleApiClient.ConnectionCallbacks, Go
                                 if (!sendMessageResult.status.isSuccess)
                                     Log.e(TAG, "sendMessage failure statusCode: ${sendMessageResult.status.statusCode}")
                                 else {
-                                    joinMonitorLayout.visibility = View.GONE
-                                    deleteMonitorButton.visibility = View.VISIBLE
-                                    mCurrentJoinMonitorStatus = true
+                                    registerMonitorLayout.visibility = View.GONE
+                                    unRegisteredMonitorLayout.visibility = View.VISIBLE
+                                    mIsRegisteredMonitorStatus = true
                                 }
                             }
                 }
@@ -112,7 +114,7 @@ class MainActivity : WearableActivity(), GoogleApiClient.ConnectionCallbacks, Go
         }
 
         //刪除游泳者監控要求
-        deleteMonitorButton.setOnClickListener {
+        unRegisteredMonitorButton.setOnClickListener {
             if (mPairPhoneNode != null && mGoogleApiClient != null) {
                 val message = "delete"
 
@@ -125,10 +127,10 @@ class MainActivity : WearableActivity(), GoogleApiClient.ConnectionCallbacks, Go
                             if (!sendMessageResult.status.isSuccess)
                                 Log.e(TAG, "sendMessage failure statusCode: ${sendMessageResult.status.statusCode}")
                             else {
-                                joinMonitorLayout.visibility = View.VISIBLE
-                                deleteMonitorButton.visibility = View.GONE
+                                registerMonitorLayout.visibility = View.VISIBLE
+                                unRegisteredMonitorLayout.visibility = View.GONE
                                 sexRadioGroup.clearCheck()
-                                mCurrentJoinMonitorStatus = false
+                                mIsRegisteredMonitorStatus = false
                             }
                         }
             }
@@ -136,22 +138,22 @@ class MainActivity : WearableActivity(), GoogleApiClient.ConnectionCallbacks, Go
 
         //切換至游泳能量監控畫面
         switchMonitorButton.setOnClickListener {
-            joinMonitorLayout.visibility = View.GONE
-            deleteMonitorButton.visibility = View.GONE
+            registerMonitorLayout.visibility = View.GONE
+            unRegisteredMonitorLayout.visibility = View.GONE
             drowningMonitorLayout.visibility = View.VISIBLE
             switchMonitorButton.visibility = View.GONE
         }
 
-        backJoinLayoutButton.setOnClickListener {
+        backRegisterLayoutButton.setOnClickListener {
             drowningMonitorLayout.visibility = View.GONE
             switchMonitorButton.visibility = View.VISIBLE
 
-            if (mCurrentJoinMonitorStatus) {
-                deleteMonitorButton.visibility = View.VISIBLE
-                joinMonitorLayout.visibility = View.GONE
+            if (mIsRegisteredMonitorStatus) {
+                unRegisteredMonitorLayout.visibility = View.VISIBLE
+                registerMonitorLayout.visibility = View.GONE
             } else {
-                deleteMonitorButton.visibility = View.GONE
-                joinMonitorLayout.visibility = View.VISIBLE
+                unRegisteredMonitorLayout.visibility = View.GONE
+                registerMonitorLayout.visibility = View.VISIBLE
             }
         }
 
@@ -168,8 +170,8 @@ class MainActivity : WearableActivity(), GoogleApiClient.ConnectionCallbacks, Go
     }
 
     override fun onPause() {
-        accEventButton?.text = "開始游泳監控"
-        currentPowerTextView?.text = ""
+        accEventButton?.text = "啟動游泳監控"
+        currentPowerTextView?.text = "0.0"
         mSensorManager?.unregisterListener(mSensorEventListener)
         super.onPause()
     }
@@ -191,6 +193,16 @@ class MainActivity : WearableActivity(), GoogleApiClient.ConnectionCallbacks, Go
 
     private fun onAccEventButtonClick() {
         if (mCurrentStatus == 0) {
+            if (!mIsRegisteredMonitorStatus) {
+                mPromptUnRegisteredTimer = Timer()
+                mPromptUnRegisteredTimer?.scheduleAtFixedRate(timerTask {
+                    runOnUiThread {
+                        Toast.makeText(this@MainActivity, "請注意！您尚未註冊溺水通報事件！", Toast.LENGTH_LONG).show()
+                    }
+                }, 0, 5000)
+            }
+
+            backRegisterLayoutButton.visibility = View.GONE
             accWrapLayout.setBackgroundColor(Color.GREEN)
             accEventButton?.text = "停止游泳監控"
             mCurrentStatus = 1
@@ -247,9 +259,12 @@ class MainActivity : WearableActivity(), GoogleApiClient.ConnectionCallbacks, Go
         } else {
             mSensorManager?.unregisterListener(mSensorEventListener)
             accWrapLayout.setBackgroundColor(Color.DKGRAY)
-            accEventButton?.text = "開始游泳監控"
+            accEventButton?.text = "啟動游泳監控"
             currentPowerTextView?.text = "0.0"
             mCurrentStatus = 0
+            mPromptUnRegisteredTimer?.cancel()
+            mPromptUnRegisteredTimer = null
+            backRegisterLayoutButton.visibility = View.VISIBLE
 
             //每次按結束就清空資料集合
             mAccDataAccessList.clear()
