@@ -43,6 +43,7 @@
                         android:id="@+id/sexRadioMale"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:checked="true"
                         android:text="男性" />
 
                     <RadioButton
@@ -125,7 +126,7 @@
                     android:id="@+id/accEventButton"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="5dp"
+                    android:layout_marginBottom="3dp"
                     android:text="啟動溺水監控"
                     android:textColor="@android:color/white"
                     android:textSize="14sp"
@@ -139,10 +140,34 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginBottom="10dp"
-                        android:text="目前能量："
+                        android:layout_marginBottom="3dp"
+                        android:text="目前狀態："
+                        android:textColor="@android:color/white"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/currentStatusTextView"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="停止"
                         android:textColor="@android:color/white"
                         android:textSize="18sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="10dp"
+                        android:text="能量："
+                        android:textColor="@android:color/white"
+                        android:textSize="16sp"
                         android:textStyle="bold" />
 
                     <TextView
@@ -151,7 +176,7 @@
                         android:layout_height="wrap_content"
                         android:text="0.0"
                         android:textColor="@android:color/white"
-                        android:textSize="24sp"
+                        android:textSize="18sp"
                         android:textStyle="bold" />
                 </LinearLayout>
 

@@ -78,12 +78,13 @@ class MainActivity : AppCompatActivity() {
                         val button = Button(this).apply {
                             text = it
                             textSize = 20f
-                            setPadding(20, 20, 20, 20)
+//                            setPadding(20, 20, 20, 20)
                             setBackgroundColor(Color.GREEN)
                             layoutParams = GridLayout.LayoutParams().apply {
                                 setMargins(10, 10, 10, 10)
                                 width = GridLayout.LayoutParams.WRAP_CONTENT
                                 height = GridLayout.LayoutParams.WRAP_CONTENT
+                                minWidth = 300
                             }
                         }
 
@@ -112,7 +113,7 @@ class MainActivity : AppCompatActivity() {
                                     val button = Button(this).apply {
                                         text = it
                                         textSize = 20f
-                                        setPadding(20, 20, 20, 20)
+//                                        setPadding(20, 20, 20, 20)
                                         setBackgroundColor(
                                                 if (mCurrentDrowningIdSet.contains(it.split(":")[0]))
                                                     Color.RED
@@ -122,6 +123,7 @@ class MainActivity : AppCompatActivity() {
                                             setMargins(10, 10, 10, 10)
                                             width = GridLayout.LayoutParams.WRAP_CONTENT
                                             height = GridLayout.LayoutParams.WRAP_CONTENT
+                                            minWidth = 300
                                         }
                                     }
 

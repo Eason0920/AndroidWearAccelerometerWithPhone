@@ -41,7 +41,7 @@ class MainActivity : WearableActivity(), GoogleApiClient.ConnectionCallbacks, Go
         const val FFT_SAMPLING_INTERVAL = 20     //傅立葉資料取樣間隔 (分割成 25Hz 用)
         const val FFT_CHECK_BEGIN_INDEX = 3     //檢查是否有溺水的傅立葉數據起始判斷點(包含)
         const val FFT_CHECK_END_INDEX = 6     //檢查是否有溺水的傅立葉數據結束判斷點(不包含)
-        const val FFT_DROWNING_THRESHOLD = 0.2     //傅立葉溺水閥值
+        const val FFT_DROWNING_THRESHOLD = 0.7     //傅立葉溺水閥值
     }
 
     //存放加速度資料的類別物件
@@ -129,7 +129,7 @@ class MainActivity : WearableActivity(), GoogleApiClient.ConnectionCallbacks, Go
                             else {
                                 registerMonitorLayout.visibility = View.VISIBLE
                                 unRegisteredMonitorLayout.visibility = View.GONE
-                                sexRadioGroup.clearCheck()
+                                sexRadioGroup.check(sexRadioMale.id)
                                 mIsRegisteredMonitorStatus = false
                             }
                         }
@@ -172,6 +172,7 @@ class MainActivity : WearableActivity(), GoogleApiClient.ConnectionCallbacks, Go
     override fun onPause() {
         accEventButton?.text = "啟動游泳監控"
         currentPowerTextView?.text = "0.0"
+        currentStatusTextView?.text = "停止"
         mSensorManager?.unregisterListener(mSensorEventListener)
         super.onPause()
     }
@@ -205,6 +206,7 @@ class MainActivity : WearableActivity(), GoogleApiClient.ConnectionCallbacks, Go
             backRegisterLayoutButton.visibility = View.GONE
             accWrapLayout.setBackgroundColor(Color.GREEN)
             accEventButton?.text = "停止游泳監控"
+            currentStatusTextView?.text = "正常"
             mCurrentStatus = 1
             mSensorEventListener = object : SensorEventListener {
 
@@ -261,6 +263,7 @@ class MainActivity : WearableActivity(), GoogleApiClient.ConnectionCallbacks, Go
             accWrapLayout.setBackgroundColor(Color.DKGRAY)
             accEventButton?.text = "啟動游泳監控"
             currentPowerTextView?.text = "0.0"
+            currentStatusTextView?.text = "停止"
             mCurrentStatus = 0
             mPromptUnRegisteredTimer?.cancel()
             mPromptUnRegisteredTimer = null
@@ -319,6 +322,8 @@ class MainActivity : WearableActivity(), GoogleApiClient.ConnectionCallbacks, Go
 
         //最大值超過閥值視為溺水: true
         mCheckDrowningQueue.offer(rangeMaxValue!! > FFT_DROWNING_THRESHOLD)
+
+        //目前能量數據
         currentPowerTextView?.text = "$rangeMaxValue"
 //        currentPowerTextView?.setTextColor(if (rangeMaxValue > FFT_DROWNING_THRESHOLD) Color.RED else Color.WHITE)
 
@@ -328,13 +333,16 @@ class MainActivity : WearableActivity(), GoogleApiClient.ConnectionCallbacks, Go
         //檢查是否達到連續溺水警示次數並通知手機
         if ((mCheckDrowningQueue.size == DROWNING_CHECK_COUNT) && (!mCheckDrowningQueue.contains(false))) {
             accWrapLayout.setBackgroundColor(Color.RED)     //背景更改為紅色
+            currentStatusTextView?.text = "溺水"
             Toast.makeText(mWearableActivity, "發送溺水通報", Toast.LENGTH_LONG).show()
 
             thread {
                 notifyMobile()
             }.start()
-        } else
+        } else {
             accWrapLayout.setBackgroundColor(Color.GREEN)
+            currentStatusTextView?.text = "正常"
+        }
 
         //test
 //        if (true) {
