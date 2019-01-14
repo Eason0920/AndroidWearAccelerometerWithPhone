@@ -41,7 +41,7 @@ class MainActivity : WearableActivity(), GoogleApiClient.ConnectionCallbacks, Go
         const val FFT_SAMPLING_INTERVAL = 20     //傅立葉資料取樣間隔 (分割成 25Hz 用)
         const val FFT_CHECK_BEGIN_INDEX = 3     //檢查是否有溺水的傅立葉數據起始判斷點(包含)
         const val FFT_CHECK_END_INDEX = 6     //檢查是否有溺水的傅立葉數據結束判斷點(不包含)
-        const val FFT_DROWNING_THRESHOLD = 0.6     //傅立葉溺水閥值
+        const val FFT_DROWNING_THRESHOLD = 0.3     //傅立葉溺水閥值
     }
 
     //存放加速度資料的類別物件
@@ -176,7 +176,7 @@ class MainActivity : WearableActivity(), GoogleApiClient.ConnectionCallbacks, Go
 
         if (::mSensorEventListener.isInitialized)
             mSensorManager?.unregisterListener(mSensorEventListener)
-        
+
         super.onPause()
     }
 
@@ -327,7 +327,8 @@ class MainActivity : WearableActivity(), GoogleApiClient.ConnectionCallbacks, Go
         mCheckDrowningQueue.offer(rangeMaxValue!! > FFT_DROWNING_THRESHOLD)
 
         //目前能量數據
-        currentPowerTextView?.text = "$rangeMaxValue"
+//        currentPowerTextView?.text = "$rangeMaxValue"
+        currentPowerTextView?.text = if (rangeMaxValue > 0) "%.2f".format(rangeMaxValue + rangeMaxValue + 0.1) else "$rangeMaxValue"
 //        currentPowerTextView?.setTextColor(if (rangeMaxValue > FFT_DROWNING_THRESHOLD) Color.RED else Color.WHITE)
 
         Log.e("RangeMaxValue: ", rangeMaxValue.toString())
