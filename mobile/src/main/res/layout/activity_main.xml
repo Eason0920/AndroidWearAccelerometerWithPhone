@@ -7,36 +7,48 @@
     tools:context="training.eason.fftwithwearable.activities.MainActivity">
 
     <LinearLayout
+        android:id="@+id/wearablesConnectedCountLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentTop="true"
+        android:layout_marginBottom="20dp"
         android:orientation="horizontal">
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="目前已連線數： "
-            android:textSize="16sp" />
+            android:textSize="20sp" />
 
         <TextView
             android:id="@+id/wearablesConnectedCountTextView"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textColor="@android:color/holo_blue_dark"
-            android:textSize="18sp" />
+            android:textSize="22sp" />
 
     </LinearLayout>
+
+    <GridLayout
+        android:id="@+id/registerListGridLayout"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/wearablesConnectedCountLayout"
+        android:columnCount="2"
+        android:orientation="horizontal" />
 
     <TextView
         android:id="@+id/drowningWarningTextView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_centerInParent="true"
-        android:layout_marginTop="36dp"
-        android:text="疑似發生溺水事件\n請確認"
+        android:layout_above="@+id/drowningConfirmButton"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="10dp"
+        android:layout_marginTop="10dp"
+        android:text="疑似發生溺水事件，請注意！"
         android:textAlignment="center"
         android:textColor="@android:color/holo_red_dark"
-        android:textSize="30sp"
+        android:textSize="20sp"
         android:visibility="invisible" />
 
     <Button
@@ -44,7 +56,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
-        android:text="我知道了"
+        android:text="確認通知"
         android:textSize="20sp" />
 
 </RelativeLayout>
