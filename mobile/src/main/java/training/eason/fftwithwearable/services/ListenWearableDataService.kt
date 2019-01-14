@@ -49,9 +49,9 @@ class ListenWearableDataService : WearableListenerService() {
         try {
             unregisterReceiver(mDrowningReceiver)
         } catch (e: Exception) {
+        } finally {
+            registerReceiver(mDrowningReceiver, IntentFilter("drowning"))
         }
-
-        registerReceiver(mDrowningReceiver, IntentFilter("drowning"))
 
         val eventString = String(messageEvent.data)
         val sourceNodeId = messageEvent.sourceNodeId
@@ -65,8 +65,8 @@ class ListenWearableDataService : WearableListenerService() {
 
                 //判斷來源 id 不存在已註冊的 id 列表中才進行註冊
                 if (!registerListString.contains(sourceNodeId)) {
-                    registerListString += "$sourceNodeId:${eventString.split(",")[1]},D9EG789:女性,JSF63E5:女性,K1WQ52A:男性,L66RFNZ:男性,ADILXH8:女性,CCW56OI:男性,32ENBC9:女性,B2R6WC3:男性,KOO61S:男性,"
-//                    registerListString += "$sourceNodeId:${eventString.split(",")[1]},"
+//                    registerListString += "D9EG789:女性,JSF63E5:女性,$sourceNodeId:${eventString.split(",")[1]},K1WQ52A:男性,L66RFNZ:男性,ADILXH8:女性,CCW56OI:男性,32ENBC9:女性,B2R6WC3:男性,KOO61S:男性,"
+                    registerListString += "$sourceNodeId:${eventString.split(",")[1]},"
                     val editor = sharedPreferences.edit()
 
                     //先進行移除動作再進行寫入動作，確保資料正確寫入
@@ -112,7 +112,7 @@ class ListenWearableDataService : WearableListenerService() {
                 registerList.filter {
                     it.indexOf(sourceNodeId) == -1 && it.isNotBlank()
                 }.forEach {
-                    newRegisterListString +=  "$it,"
+                    newRegisterListString += "$it,"
                 }
 
                 val editor = sharedPreferences.edit()

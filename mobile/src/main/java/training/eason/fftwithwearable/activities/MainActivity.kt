@@ -39,12 +39,15 @@ class MainActivity : AppCompatActivity() {
         detectConnectedWearables()
         detectEvents()
 
-        drowningConfirmButton.setOnClickListener {
-            drowningWarningTextView!!.visibility = View.INVISIBLE
-            mVibrator?.cancel()
-            mCurrentDrowningIdSet.clear()
-            for (i in 0 until registerListGridLayout.childCount) {
-                (registerListGridLayout.getChildAt(i) as? Button)?.setBackgroundColor(Color.GREEN)
+        drowningConfirmButton.apply {
+            setOnClickListener {
+                this.visibility = View.INVISIBLE
+                drowningWarningTextView!!.visibility = View.INVISIBLE
+                mVibrator?.cancel()
+                mCurrentDrowningIdSet.clear()
+                for (i in 0 until registerListGridLayout.childCount) {
+                    (registerListGridLayout.getChildAt(i) as? Button)?.setBackgroundColor(Color.GREEN)
+                }
             }
         }
     }
@@ -96,6 +99,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun detectEvents(newIntent: Intent? = null) {
+        drowningConfirmButton.visibility = View.INVISIBLE
+        drowningWarningTextView!!.visibility = View.INVISIBLE
         val intentObj = newIntent ?: intent
 
         intentObj?.getStringExtra("event")?.also { _event ->
@@ -134,7 +139,8 @@ class MainActivity : AppCompatActivity() {
                     wearablesConnectedCountTextView.text = registerListGridLayout.childCount.toString()
 
                     if (_event == "drowning") {
-                        drowningWarningTextView!!.visibility = View.VISIBLE
+                        drowningConfirmButton.visibility = View.VISIBLE
+                        drowningWarningTextView.visibility = View.VISIBLE
                         mVibrator?.also { _vibrator ->
                             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                                 _vibrator.vibrate(VibrationEffect.createOneShot(VIBRATION_MILLIS, VibrationEffect.DEFAULT_AMPLITUDE))
