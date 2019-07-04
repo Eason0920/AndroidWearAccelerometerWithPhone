@@ -64,9 +64,9 @@ class ListenWearableDataService : WearableListenerService() {
                 var registerListString = sharedPreferences.getString("registerList", "")
 
                 //判斷來源 id 不存在已註冊的 id 列表中才進行註冊
-                if (!registerListString.contains(sourceNodeId)) {
+                if (!registerListString!!.contains(sourceNodeId)) {
 //                    registerListString += "D9EG789:女性,JSF63E5:女性,$sourceNodeId:${eventString.split(",")[1]},K1WQ52A:男性,L66RFNZ:男性,ADILXH8:女性,CCW56OI:男性,32ENBC9:女性,B2R6WC3:男性,KOO61S:男性,"
-                    registerListString += "$sourceNodeId:${eventString.split(",")[1]},"
+                    registerListString += "$sourceNodeId-${eventString.split(",")[1]},"
                     val editor = sharedPreferences.edit()
 
                     //先進行移除動作再進行寫入動作，確保資料正確寫入
@@ -108,10 +108,10 @@ class ListenWearableDataService : WearableListenerService() {
                 //將游泳資料從 SharedPreferences 移除
                 var newRegisterListString = ""
                 val sharedPreferences = this.getSharedPreferences("drowningManager", Context.MODE_PRIVATE)
-                val registerList = sharedPreferences.getString("registerList", "").split(",")
-                registerList.filter {
+                val registerList = sharedPreferences.getString("registerList", "")?.split(",")
+                registerList?.filter {
                     it.indexOf(sourceNodeId) == -1 && it.isNotBlank()
-                }.forEach {
+                }?.forEach {
                     newRegisterListString += "$it,"
                 }
 

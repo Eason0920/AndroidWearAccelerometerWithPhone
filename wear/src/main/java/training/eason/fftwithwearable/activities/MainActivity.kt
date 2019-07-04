@@ -88,29 +88,31 @@ class MainActivity : WearableActivity(), GoogleApiClient.ConnectionCallbacks, Go
 
         //發送游泳者監控要求
         sendMonitorButton.setOnClickListener {
-            sexRadioGroup.findViewById<RadioButton>(sexRadioGroup.checkedRadioButtonId)?.also { _sexRadioButton ->
-                if (mPairPhoneNode != null && mGoogleApiClient != null) {
-                    val message = "register,${_sexRadioButton.text}"
+            if (!ageEditText.text.isNullOrBlank())
+                sexRadioGroup.findViewById<RadioButton>(sexRadioGroup.checkedRadioButtonId)?.also { _sexRadioButton ->
+                    if (mPairPhoneNode != null && mGoogleApiClient != null) {
+                        val message = "register,${_sexRadioButton.text}: ${ageEditText.text}"
 
-                    Wearable.MessageApi.sendMessage(
-                            mGoogleApiClient,
-                            mPairPhoneNode?.id,
-                            CALLER_EVENT,
-                            message.toByteArray())
-                            .setResultCallback { sendMessageResult ->
-                                if (!sendMessageResult.status.isSuccess)
-                                    Log.e(TAG, "sendMessage failure statusCode: ${sendMessageResult.status.statusCode}")
-                                else {
-                                    registerMonitorLayout.visibility = View.GONE
-                                    unRegisteredMonitorLayout.visibility = View.VISIBLE
-                                    mIsRegisteredMonitorStatus = true
+                        Wearable.MessageApi.sendMessage(
+                                mGoogleApiClient,
+                                mPairPhoneNode?.id,
+                                CALLER_EVENT,
+                                message.toByteArray())
+                                .setResultCallback { sendMessageResult ->
+                                    if (!sendMessageResult.status.isSuccess)
+                                        Log.e(TAG, "sendMessage failure statusCode: ${sendMessageResult.status.statusCode}")
+                                    else {
+                                        registerMonitorLayout.visibility = View.GONE
+                                        unRegisteredMonitorLayout.visibility = View.VISIBLE
+                                        mIsRegisteredMonitorStatus = true
+                                    }
                                 }
-                            }
+                    }
+                } ?: run {
+                    Toast.makeText(this@MainActivity, "請先選擇性別資料", Toast.LENGTH_LONG).show()
                 }
-            } ?: kotlin.run {
-                Toast.makeText(this@MainActivity, "請先選擇性別資料", Toast.LENGTH_LONG).show()
-            }
-
+            else
+                Toast.makeText(this@MainActivity, "請先輸入年齡資料", Toast.LENGTH_LONG).show()
         }
 
         //刪除游泳者監控要求

@@ -1,5 +1,6 @@
 package training.eason.fftwithwearable.activities
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.graphics.Color
@@ -98,6 +99,7 @@ class MainActivity : AppCompatActivity() {
         wearablesConnectedCountTextView.text = registerListGridLayout.childCount.toString()
     }
 
+    @SuppressLint("SetTextI18n")
     private fun detectEvents(newIntent: Intent? = null) {
         drowningConfirmButton.visibility = View.INVISIBLE
         drowningWarningTextView!!.visibility = View.INVISIBLE
@@ -112,15 +114,15 @@ class MainActivity : AppCompatActivity() {
 
                     registerListGridLayout.removeAllViews()
                     val sharedPreferences = this.getSharedPreferences("drowningManager", Context.MODE_PRIVATE)
-                    sharedPreferences.getString("registerList", "").split(",")
-                            .forEach {
+                    sharedPreferences.getString("registerList", "")?.split(",")
+                            ?.forEach {
                                 if (it.isNotBlank()) {
                                     val button = Button(this).apply {
-                                        text = it
+                                        text = "${it.split("-")[1]}歲"
                                         textSize = 20f
 //                                        setPadding(20, 20, 20, 20)
                                         setBackgroundColor(
-                                                if (mCurrentDrowningIdSet.contains(it.split(":")[0]))
+                                                if (mCurrentDrowningIdSet.contains(it.split("-")[0]))
                                                     Color.RED
                                                 else
                                                     Color.GREEN)
