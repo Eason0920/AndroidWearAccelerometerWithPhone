@@ -65,7 +65,7 @@ class ListenWearableDataService : WearableListenerService() {
 
                 //判斷來源 id 不存在已註冊的 id 列表中才進行註冊
                 if (!registerListString!!.contains(sourceNodeId)) {
-//                    registerListString += "D9EG789:女性,JSF63E5:女性,$sourceNodeId:${eventString.split(",")[1]},K1WQ52A:男性,L66RFNZ:男性,ADILXH8:女性,CCW56OI:男性,32ENBC9:女性,B2R6WC3:男性,KOO61S:男性,"
+//                    registerListString += "D9EG789-女性：40,JSF63E5-女性：38,$sourceNodeId-${eventString.split(",")[1]},K1WQ52A-男性：29,L66RFNZ-男性：35,ADILXH8-女性：32,CCW56OI-男性：42,32ENBC9-女性：45,B2R6WC3-男性：58,KOO61S-男性：31,"
                     registerListString += "$sourceNodeId-${eventString.split(",")[1]},"
                     val editor = sharedPreferences.edit()
 

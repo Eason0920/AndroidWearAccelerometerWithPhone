@@ -63,6 +63,7 @@ class MainActivity : AppCompatActivity() {
         detectEvents(intent)
     }
 
+    @SuppressLint("SetTextI18n")
     private fun detectConnectedWearables() {
 //        thread {
 //            Wearable.NodeApi.getConnectedNodes(mGoogleApiClient).await().nodes
@@ -76,11 +77,11 @@ class MainActivity : AppCompatActivity() {
 //        }
 
         val sharedPreferences = this.getSharedPreferences("drowningManager", Context.MODE_PRIVATE)
-        sharedPreferences.getString("registerList", "").split(",")
-                .forEach {
+        sharedPreferences.getString("registerList", "")?.split(",")
+                ?.forEach {
                     if (it.isNotBlank()) {
                         val button = Button(this).apply {
-                            text = it
+                            text = "${it.split("-")[1]}歲"
                             textSize = 20f
 //                            setPadding(20, 20, 20, 20)
                             setBackgroundColor(Color.GREEN)

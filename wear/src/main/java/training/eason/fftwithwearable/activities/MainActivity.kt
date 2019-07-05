@@ -91,7 +91,7 @@ class MainActivity : WearableActivity(), GoogleApiClient.ConnectionCallbacks, Go
             if (!ageEditText.text.isNullOrBlank())
                 sexRadioGroup.findViewById<RadioButton>(sexRadioGroup.checkedRadioButtonId)?.also { _sexRadioButton ->
                     if (mPairPhoneNode != null && mGoogleApiClient != null) {
-                        val message = "register,${_sexRadioButton.text}: ${ageEditText.text}"
+                        val message = "register,${_sexRadioButton.text}：${ageEditText.text}"
 
                         Wearable.MessageApi.sendMessage(
                                 mGoogleApiClient,
