@@ -30,6 +30,8 @@ import java.util.*
 import java.util.concurrent.TimeUnit
 import kotlin.concurrent.thread
 import kotlin.concurrent.timerTask
+import kotlin.math.pow
+import kotlin.math.sqrt
 
 class MainActivity : WearableActivity(), GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
 
@@ -234,7 +236,7 @@ class MainActivity : WearableActivity(), GoogleApiClient.ConnectionCallbacks, Go
                                             accY,
                                             accZ,
                                             //計算能量
-                                            Math.sqrt(Math.pow(accX.toDouble(), 2.0) + Math.pow(accY.toDouble(), 2.0) + Math.pow(accZ.toDouble(), 2.0)))
+                                            sqrt(accX.toDouble().pow(2.0) + accY.toDouble().pow(2.0) + accZ.toDouble().pow(2.0)))
                             )
 
                             //達到 500 份資料後進行頻譜能量轉換
@@ -242,16 +244,6 @@ class MainActivity : WearableActivity(), GoogleApiClient.ConnectionCallbacks, Go
                                 convertFrequencyByFFT()
                             }
                         }
-
-//                        accSamplingRateTextView?.text = "Sampling rate per second: ${1000 / diffMillis}"
-//                        accXTextView?.text = "X: $accX"
-//                        accYTextView?.text = "Y: $accY"
-//                        accZTextView?.text = "Z: $accZ"
-
-//                        Log.e("HERE", "X: $accX")
-//                        Log.e("HERE", "Y: $accY")
-//                        Log.e("HERE", "Z: $accZ")
-//                        Log.e("HERE", "power: ${Math.sqrt(Math.pow(accX.toDouble(), 2.0) + Math.pow(accY.toDouble(), 2.0) + Math.pow(accZ.toDouble(), 2.0))}")
                     }
                 }
 
@@ -310,28 +302,26 @@ class MainActivity : WearableActivity(), GoogleApiClient.ConnectionCallbacks, Go
 
         //利用 JTransforms FFT library 轉換為頻率數據
         val fftDo = DoubleFFT_1D(inputAccDataPowers.size.toLong())
-        val fft = Arrays.copyOf(inputAccDataPowers, inputAccDataPowers.size)
+        val fft = inputAccDataPowers.copyOf(inputAccDataPowers.size)
         fftDo.realForward(fft)      //realForward: 轉頻譜能量(已排除一半對稱數值)、realForwardFull: 轉頻譜能量(包含一半對稱數值，長度 x 2)
 
         //取得當前的頻率能量區間最大值
         val rangeMaxValue =
-                fft?.map {
+                fft.map {
                     (abs(it) / fft.size)     //數據轉正數，並進行常態化
-                }?.filterIndexed { idx, _ ->
+                }.filterIndexed { idx, _ ->
                     idx % FFT_SAMPLING_INTERVAL == 0      //每次取樣數據 500 個，每 20 點取一次，最後取得 25 個點(25Hz)
-                }?.subList(
+                }.subList(
                         FFT_CHECK_BEGIN_INDEX, FFT_CHECK_END_INDEX      //取得要判斷的範圍數據
-                )?.map {
+                ).map {
                     "%.2f".format(it).toDouble()        //數據四捨五入到小數點第二位
-                }?.max()        //取得最大值
+                }.max()        //取得最大值
 
         //最大值超過閥值視為溺水: true
         mCheckDrowningQueue.offer(rangeMaxValue!! > FFT_DROWNING_THRESHOLD)
 
         //目前能量數據
-//        currentPowerTextView?.text = "$rangeMaxValue"
         currentPowerTextView?.text = if (rangeMaxValue > 0) "%.2f".format(rangeMaxValue + rangeMaxValue + 0.1) else "$rangeMaxValue"
-//        currentPowerTextView?.setTextColor(if (rangeMaxValue > FFT_DROWNING_THRESHOLD) Color.RED else Color.WHITE)
 
         Log.e("RangeMaxValue: ", rangeMaxValue.toString())
         Log.e("IsNotify: ", (rangeMaxValue > FFT_DROWNING_THRESHOLD).toString())
@@ -349,11 +339,6 @@ class MainActivity : WearableActivity(), GoogleApiClient.ConnectionCallbacks, Go
             accWrapLayout.setBackgroundColor(Color.GREEN)
             currentStatusTextView?.text = "正常"
         }
-
-        //test
-//        if (true) {
-//            notifyMobile()
-//        }
 
         //清空存放數據的集合，等待下一次資料集合進來
         mAccDataAccessList.clear()
